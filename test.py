@@ -1,26 +1,31 @@
 import unittest
 
-from opendatalinter import CSVLinter
+from opendatalinter import CSVLinter, ExcelLinter
 from opendatalinter.vo import LintResult
 
 
-def gen_linter(file_path: str) -> CSVLinter:
+def gen_csv_linter(file_path: str) -> CSVLinter:
     with open(file_path, "rb") as f:
         return CSVLinter(f.read(), file_path)
+
+
+def gen_excel_linter(file_path: str) -> ExcelLinter:
+    with open(file_path, "rb") as f:
+        return ExcelLinter(f.read(), file_path)
 
 
 class TestCsvLinter(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.nb01h0013 = gen_linter("samples/nb01h0013.csv")
-        cls.nb01h0013_sjis = gen_linter("samples/nb01h0013_sjis.csv")
-        cls.nb01h0013_cp932 = gen_linter("samples/nb01h0013_cp932.csv")
-        cls.perfect = gen_linter("samples/perfect.csv")
-        cls.text = gen_linter("samples/text.txt")
-        cls.check_1_2 = gen_linter("samples/check_1_2.csv")
+        cls.nb01h0013 = gen_csv_linter("samples/nb01h0013.csv")
+        cls.nb01h0013_sjis = gen_csv_linter("samples/nb01h0013_sjis.csv")
+        cls.nb01h0013_cp932 = gen_csv_linter("samples/nb01h0013_cp932.csv")
+        cls.perfect = gen_csv_linter("samples/perfect.csv")
+        cls.text = gen_csv_linter("samples/text.txt")
+        cls.check_1_2 = gen_csv_linter("samples/check_1_2.csv")
 
     def test_empty_header(self):
-        linter = gen_linter("samples/all_num.csv")
+        linter = gen_csv_linter("samples/all_num.csv")
         self.assertValidLintResult(linter.check_1_1())
         self.assertValidLintResult(linter.check_1_2())
         self.assertValidLintResult(linter.check_1_3())
@@ -52,21 +57,21 @@ class TestCsvLinter(unittest.TestCase):
 
     def test_check_1_3(self):
         self.assertValidLintResult(self.perfect.check_1_3())
-        linter = gen_linter("samples/check_1_3.csv")
+        linter = gen_csv_linter("samples/check_1_3.csv")
         result = linter.check_1_3()
         self.assertEqual({(4, 0), (5, 0), (6, 0), (7, 0), (9, 0), (7, 4)},
                          set(result.invalid_contents[0].invalid_cells))
 
     def test_check_1_5(self):
         self.assertValidLintResult(self.perfect.check_1_5())
-        linter = gen_linter("samples/check_1_5.csv")
+        linter = gen_csv_linter("samples/check_1_5.csv")
         result = linter.check_1_5()
         self.assertEqual({(0, 2), (1, 1), (1, 2), (2, 0)},
                          set(result.invalid_contents[0].invalid_cells))
 
     def test_check_1_6(self):
         self.assertValidLintResult(self.perfect.check_1_6())
-        linter = gen_linter("samples/check_1_6.csv")
+        linter = gen_csv_linter("samples/check_1_6.csv")
         result = linter.check_1_6()
         self.assertEqual(
             {(2, 0), (2, 3), (2, 4), (2, 6), (2, 7), (2, 9), (2, 10), (2, 12),
@@ -85,21 +90,21 @@ class TestCsvLinter(unittest.TestCase):
 
     def test_check_1_11(self):
         self.assertValidLintResult(self.perfect.check_1_11())
-        linter = gen_linter("samples/check_1_11.csv")
+        linter = gen_csv_linter("samples/check_1_11.csv")
         result = linter.check_1_11()
         self.assertEqual({(1, 5), (2, 1), (2, 2), (2, 5)},
                          set(result.invalid_contents[0].invalid_cells))
 
     def test_check_1_12(self):
         self.assertValidLintResult(self.perfect.check_1_12())
-        linter = gen_linter("samples/check_1_12.csv")
+        linter = gen_csv_linter("samples/check_1_12.csv")
         result = linter.check_1_12()
         self.assertEqual({(2, 0), (4, 1), (6, 1)},
                          set(result.invalid_contents[0].invalid_cells))
 
     def test_check_1_13(self):
         self.assertValidLintResult(self.perfect.check_1_12())
-        linter = gen_linter("samples/check_1_13.csv")
+        linter = gen_csv_linter("samples/check_1_13.csv")
         result = linter.check_1_13()
         print(result)
         self.assertSetEqual({(2, 0), (2, 2), (3, 0), (3, 2), (3, 3)},
@@ -107,7 +112,7 @@ class TestCsvLinter(unittest.TestCase):
 
     def test_check_2_1(self):
         self.assertValidLintResult(self.perfect.check_2_1())
-        linter = gen_linter("samples/check_2_1.csv")
+        linter = gen_csv_linter("samples/check_2_1.csv")
         result = linter.check_2_1()
         self.assertEqual({(None, 18)},
                          set(result.invalid_contents[0].invalid_cells))
@@ -117,6 +122,12 @@ class TestCsvLinter(unittest.TestCase):
     def assertValidLintResult(self, result: LintResult):
         self.assertTrue(result.is_valid)
         self.assertEqual(0, len(result.invalid_contents))
+
+
+class TestExcelLinter(unittest.TestCase):
+    def test_check_1_1(self):
+        linter = gen_excel_linter("./samples/since2003_visitor_arrivals.xlsx")
+        self.assertTrue(linter.check_1_1().is_valid)
 
 
 if __name__ == '__main__':
