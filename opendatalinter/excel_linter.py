@@ -30,12 +30,12 @@ class ExcelLinter:
 
         # ToDo: どのシートを見る?
         for sheetname in wb.sheetnames:
-            ws = wb[sheetname]
-            text = ws2csv(ws)
+            self.ws = wb[sheetname]
+            self.text = ws2csv(self.ws)
             break
 
         self.wb = wb
-        self.csv_linter = CSVLinter(text.encode(),
+        self.csv_linter = CSVLinter(self.text.encode(),
                                     "from_excel.csv",
                                     title_line_num=title_line_num,
                                     header_line_num=header_line_num)
