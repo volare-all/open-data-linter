@@ -126,24 +126,86 @@ class TestCsvLinter(unittest.TestCase):
 
     def test_column_classify(self):
         linter = gen_csv_linter("samples/classify_sample.csv")
-        result_array = linter._column_classify()
-        self.assertEqual(result_array, ['prefecture_number',
-                                        'prefecture_number',
-                                        'prefecture_name',
-                                        'prefecture_name',
-                                        'year_ad',
-                                        'year_ad',
-                                        'time_code',
-                                        'time_code',
-                                        'year_jp',
-                                        'year_jp',
-                                        'number',
-                                        'number',
-                                        'string',
-                                        'string',
-                                        'other',
-                                        'other'
-                                        ])
+        classify_array = linter._column_classify()
+        self.assertEqual(classify_array[0], {
+            'prefecture_number': True,
+            'prefecture_name': False,
+            'year_ad': False,
+            'time_code': False,
+            'year_jp': False,
+            'number': False,
+            'string': False,
+            'other': False})
+
+        self.assertEqual(classify_array[2], {
+            'prefecture_number': False,
+            'prefecture_name': True,
+            'year_ad': False,
+            'time_code': False,
+            'year_jp': False,
+            'number': False,
+            'string': False,
+            'other': False})
+
+        self.assertEqual(classify_array[4], {
+            'prefecture_number': False,
+            'prefecture_name': False,
+            'year_ad': True,
+            'time_code': False,
+            'year_jp': False,
+            'number': False,
+            'string': False,
+            'other': False})
+
+        self.assertEqual(classify_array[6], {
+            'prefecture_number': False,
+            'prefecture_name': False,
+            'year_ad': False,
+            'time_code': True,
+            'year_jp': False,
+            'number': False,
+            'string': False,
+            'other': False})
+
+        self.assertEqual(classify_array[8], {
+            'prefecture_number': False,
+            'prefecture_name': False,
+            'year_ad': False,
+            'time_code': False,
+            'year_jp': True,
+            'number': False,
+            'string': False,
+            'other': False})
+
+        self.assertEqual(classify_array[10], {
+            'prefecture_number': False,
+            'prefecture_name': False,
+            'year_ad': False,
+            'time_code': False,
+            'year_jp': False,
+            'number': True,
+            'string': False,
+            'other': False})
+
+        self.assertEqual(classify_array[12], {
+            'prefecture_number': False,
+            'prefecture_name': False,
+            'year_ad': False,
+            'time_code': False,
+            'year_jp': False,
+            'number': False,
+            'string': True,
+            'other': False})
+
+        self.assertEqual(classify_array[14], {
+            'prefecture_number': False,
+            'prefecture_name': False,
+            'year_ad': False,
+            'time_code': False,
+            'year_jp': False,
+            'number': False,
+            'string': False,
+            'other': True})
 
 
 class TestExcelLinter(unittest.TestCase):

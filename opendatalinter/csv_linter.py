@@ -17,6 +17,7 @@ from .errors import TitleEstimateError, HeaderEstimateError
 
 class CSVLinter:
     INTEGER_RATE = 0.8  # 列を数値列か判定する基準(数値が含まれているセル数 / 列の長さ)
+    CLASSIY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ + 空のセル))
     # セルの文字列のうち, 空として扱うもの
     EMPTY_REGEX_LIST = list(
         map(lambda s: re.compile(s), [r'^\s*$', '-', 'ー', 'なし']))
@@ -478,25 +479,77 @@ class CSVLinter:
         返り値: 列ごとに分類結果を格納した配列
         """
 
-        array = []
-        return ['prefecture_number',
-                'prefecture_number',
-                'prefecture_name',
-                'prefecture_name',
-                'year_ad',
-                'year_ad',
-                'time_code',
-                'time_code',
-                'year_jp',
-                'year_jp',
-                'number',
-                'number',
-                'string',
-                'string',
-                'other',
-                'other']
+        classify_array = []
 
-    def calc_is_num_per_row(self):
+        for i in range(len(self.df.columns)):
+            column = self.df.iloc[:, i]
+
+            klasses = {
+                'prefecture_number': False,
+                'prefecture_name': False,
+                'year_ad': False,
+                'time_code': False,
+                'year_jp': False,
+                'number': False,
+                'string': False,
+                'other': False
+            }
+
+            empty_counter = 0  # 空データに該当するもの
+            items_counter = {
+                'prefecture_number': 0,
+                'prefecture_name': 0,
+                'year_ad': 0,
+                'time_code': 0,
+                'year_jp': 0,
+                'number': 0,
+                'string': 0,
+                'other': 0
+            }
+
+            for elem in column:
+                if self.__is_number(elem):
+                    items_counter['number'] += 1
+                    if self.__is_prefecture_number(elem):
+                        items_counter['prefecture_number'] += 1
+                    if self.__is_year_ad(elem):
+                        items_counter['year_ad'] += 1
+                    if self.__is_time_code(elem):
+                        items_counter['time_code'] += 1
+                elif self.__is_empty(elem):
+                    items_counter['empty'] += 1
+                else:
+                    items_counter['string'] += 1
+                    if self.__is_prefecture_name(elem):
+                        items_counter['prefecture_name'] += 1
+                    if self.__is_year_jp(elem):
+                        items_counter['year_jp'] += 1
+
+            for key, value in items_counter:
+                if value / (len(self.df) - empty_counter) > self.CLASSIFY_RATE:
+                    klasses[key] = True
+
+        # return classify_array
+
+    def __is_number(self, elem):
+        pass
+
+    def __is_prefecture_number(self, elem):
+        pass
+
+    def __is_year_ad(self, elem):
+        pass
+
+    def __is_time_code(self, elem):
+        pass
+
+    def __is_prefecture_name(self, elem):
+        pass
+
+    def __is_year_jp(self, elem):
+        pass
+
+    def calc_is_num_per_row(self, elem):
         """
         返り値: [配列]列ごとの数値列であるかの真偽値
 
