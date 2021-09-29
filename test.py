@@ -129,6 +129,12 @@ class TestExcelLinter(unittest.TestCase):
         linter = gen_excel_linter("./samples/since2003_visitor_arrivals.xlsx")
         self.assertTrue(linter.check_1_1().is_valid)
 
+    def test_check_1_7(self):
+        linter = gen_excel_linter("samples/expression.xlsx")
+        result = linter.check_1_7()
+        self.assertEqual({(1, 2), (2, 0), (2, 2)},
+                         set(result.invalid_contents[0].invalid_cells))
+
 
 if __name__ == '__main__':
     unittest.main()
