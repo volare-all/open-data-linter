@@ -200,7 +200,8 @@ class CSVLinter:
     @before_check_1_1
     def check_1_5(self):
         """
-        スペースや改⾏等で体裁を整えていないか
+        スペースや改⾏等で体裁を整えていないか。
+        スペースと改行を1つ以上含む要素をinvalidとみなす。
         """
         invalid_cells = []
         for df, invalid_cell_factory in [

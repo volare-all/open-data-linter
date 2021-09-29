@@ -67,7 +67,7 @@ class TestCsvLinter(unittest.TestCase):
         self.assertValidLintResult(self.perfect.check_1_5())
         linter = gen_csv_linter("samples/check_1_5.csv")
         result = linter.check_1_5()
-        self.assertEqual({(0, 2), (1, 1), (1, 2), (2, 0)},
+        self.assertEqual({(0, 2), (1, 1), (1, 2), (2, 0), (2, 1)},
                          set(result.invalid_contents[0].invalid_cells))
 
     def test_check_1_6(self):

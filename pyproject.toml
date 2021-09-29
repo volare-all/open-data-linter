@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "csv-linter-backend"
+name = "open-data-linter"
 version = "0.1.0"
 description = ""
 authors = []
@@ -17,6 +17,10 @@ openpyxl = "^3.0.9"
 [tool.poetry.dev-dependencies]
 yapf = "^0.31.0"
 flake8 = "^3.9.2"
+toml = "^0.10.2"
+
+[tool.yapf]
+based_on_style = "pep8"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
