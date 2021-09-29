@@ -2,9 +2,9 @@ import csv
 import io
 
 import openpyxl
-import pandas as pd
 
 from .csv_linter import CSVLinter
+from .vo import LintResult
 
 
 def ws2csv(ws) -> str:
@@ -56,3 +56,16 @@ class ExcelLinter:
                 print(merged_cell.bounds)
                 print(merged_cell.size)
             break
+
+    def check_1_7(self):
+        """
+        数式を使⽤している場合は、数値データに修正しているか。
+        '='から始まらないセルをinvalidとみなす。
+        """
+        invalid_cells = []
+        for r in range(0, self.ws.max_row):
+            for c in range(0, self.ws.max_column):
+                if str(self.ws.cell(r + 1, c + 1).value).startswith("="):
+                    invalid_cells.append((r, c))
+        return LintResult.gen_single_error_message_result(
+            "数式が含まれています", invalid_cells)
