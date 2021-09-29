@@ -23,6 +23,7 @@ class TestCsvLinter(unittest.TestCase):
         cls.perfect = gen_csv_linter("samples/perfect.csv")
         cls.text = gen_csv_linter("samples/text.txt")
         cls.check_1_2 = gen_csv_linter("samples/check_1_2.csv")
+        cls.classify_sample = gen_csv_linter("samples/classify_sample.csv")
 
     def test_empty_header(self):
         linter = gen_csv_linter("samples/all_num.csv")
@@ -122,6 +123,27 @@ class TestCsvLinter(unittest.TestCase):
     def assertValidLintResult(self, result: LintResult):
         self.assertTrue(result.is_valid)
         self.assertEqual(0, len(result.invalid_contents))
+
+    def test_column_classify(self):
+        linter = gen_csv_linter("samples/classify_sample.csv")
+        result_array = linter._column_classify()
+        self.assertEqual(result_array, ['prefecture_number',
+                                        'prefecture_number',
+                                        'prefecture_name',
+                                        'prefecture_name',
+                                        'year_ad',
+                                        'year_ad',
+                                        'time_code',
+                                        'time_code',
+                                        'year_jp',
+                                        'year_jp',
+                                        'number',
+                                        'number',
+                                        'string',
+                                        'string',
+                                        'other',
+                                        'other'
+                                        ])
 
 
 class TestExcelLinter(unittest.TestCase):

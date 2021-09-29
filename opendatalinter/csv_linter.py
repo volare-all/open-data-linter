@@ -473,6 +473,29 @@ class CSVLinter:
             len(invalid_row_cells) + len(invalid_column_cells) == 0,
             invalid_contents)
 
+    def _column_classify(self):
+        """
+        返り値: 列ごとに分類結果を格納した配列
+        """
+
+        array = []
+        return ['prefecture_number',
+                'prefecture_number',
+                'prefecture_name',
+                'prefecture_name',
+                'year_ad',
+                'year_ad',
+                'time_code',
+                'time_code',
+                'year_jp',
+                'year_jp',
+                'number',
+                'number',
+                'string',
+                'string',
+                'other',
+                'other']
+
     def calc_is_num_per_row(self):
         """
         返り値: [配列]列ごとの数値列であるかの真偽値
@@ -506,7 +529,7 @@ class CSVLinter:
             # print(f"len(df): {len(self.df)}")
             try:
                 if (integer_count /
-                    (len(self.df) - empty_count)) > self.INTEGER_RATE:
+                        (len(self.df) - empty_count)) > self.INTEGER_RATE:
                     array.append(True)
                 else:
                     array.append(False)
@@ -548,5 +571,5 @@ class CSVLinter:
         if pd.isnull(s):
             return True
         if type(s) is str and any(
-            [r.match(str(s)) is not None for r in self.EMPTY_REGEX_LIST]):
+                [r.match(str(s)) is not None for r in self.EMPTY_REGEX_LIST]):
             return True
