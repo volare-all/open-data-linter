@@ -130,49 +130,49 @@ class TestCsvLinter(unittest.TestCase):
         self.assertEqual(classify_array[0], {
             'prefecture_number': True,
             'prefecture_name': False,
-            'year_ad': False,
-            'time_code': False,
-            'year_jp': False,
-            'number': False,
+            'christian_era': True,
+            'datetime_code': False,
+            'jp_calendar_year': False,
+            'number': True,
             'string': False,
             'other': False})
 
         self.assertEqual(classify_array[2], {
             'prefecture_number': False,
             'prefecture_name': True,
-            'year_ad': False,
-            'time_code': False,
-            'year_jp': False,
+            'christian_era': False,
+            'datetime_code': False,
+            'jp_calendar_year': False,
             'number': False,
-            'string': False,
+            'string': True,
             'other': False})
 
         self.assertEqual(classify_array[4], {
             'prefecture_number': False,
             'prefecture_name': False,
-            'year_ad': True,
-            'time_code': False,
-            'year_jp': False,
-            'number': False,
+            'christian_era': True,
+            'datetime_code': False,
+            'jp_calendar_year': False,
+            'number': True,
             'string': False,
             'other': False})
 
         self.assertEqual(classify_array[6], {
             'prefecture_number': False,
             'prefecture_name': False,
-            'year_ad': False,
-            'time_code': True,
-            'year_jp': False,
-            'number': False,
+            'christian_era': False,
+            'datetime_code': True,
+            'jp_calendar_year': False,
+            'number': True,
             'string': False,
             'other': False})
 
         self.assertEqual(classify_array[8], {
             'prefecture_number': False,
             'prefecture_name': False,
-            'year_ad': False,
-            'time_code': False,
-            'year_jp': True,
+            'christian_era': False,
+            'datetime_code': False,
+            'jp_calendar_year': True,
             'number': False,
             'string': False,
             'other': False})
@@ -180,9 +180,9 @@ class TestCsvLinter(unittest.TestCase):
         self.assertEqual(classify_array[10], {
             'prefecture_number': False,
             'prefecture_name': False,
-            'year_ad': False,
-            'time_code': False,
-            'year_jp': False,
+            'christian_era': False,
+            'datetime_code': False,
+            'jp_calendar_year': False,
             'number': True,
             'string': False,
             'other': False})
@@ -190,9 +190,9 @@ class TestCsvLinter(unittest.TestCase):
         self.assertEqual(classify_array[12], {
             'prefecture_number': False,
             'prefecture_name': False,
-            'year_ad': False,
-            'time_code': False,
-            'year_jp': False,
+            'christian_era': False,
+            'datetime_code': False,
+            'jp_calendar_year': False,
             'number': False,
             'string': True,
             'other': False})
@@ -200,9 +200,9 @@ class TestCsvLinter(unittest.TestCase):
         self.assertEqual(classify_array[14], {
             'prefecture_number': False,
             'prefecture_name': False,
-            'year_ad': False,
-            'time_code': False,
-            'year_jp': False,
+            'christian_era': False,
+            'datetime_code': False,
+            'jp_calendar_year': False,
             'number': False,
             'string': False,
             'other': True})

@@ -17,7 +17,7 @@ from .errors import TitleEstimateError, HeaderEstimateError
 
 class CSVLinter:
     INTEGER_RATE = 0.8  # 列を数値列か判定する基準(数値が含まれているセル数 / 列の長さ)
-    CLASSIY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ + 空のセル))
+    CLASSIFY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ + 空のセル))
     # セルの文字列のうち, 空として扱うもの
     EMPTY_REGEX_LIST = list(
         map(lambda s: re.compile(s), [r'^\s*$', '-', 'ー', 'なし']))
@@ -27,6 +27,32 @@ class CSVLinter:
     CHRISTIAN_ERA_REGEX = re.compile(r"^(\d{1,4})年?$")
     NUM_WITH_BRACKETS_REGEX = re.compile(r"^(\d+?)(\s*?)[\(（)](.+?)[\)）]")
     NUM_WITH_NUM_REGEX = re.compile(r"^(\d+?)((\s+?)(\d+?))+?")
+
+    VALID_PREFECTURE_NAME = [
+        '北海道', '青森県', '岩手県', '宮城県', '秋田県',
+        '山形県', '福島県', '茨城県', '栃木県', '群馬県',
+        '埼玉県', '千葉県', '東京都', '神奈川県', '新潟県',
+        '富山県', '石川県', '福井県', '山梨県', '長野県',
+        '岐阜県', '静岡県', '愛知県', '三重県', '滋賀県',
+        '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県',
+        '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+        '徳島県', '香川県', '愛媛県', '高知県', '福岡県',
+        '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県',
+        '鹿児島県', '沖縄県'
+    ]
+
+    INVALID_PREFECTURE_NAME = [
+        '青森', '岩手', '宮城', '秋田',
+        '山形', '福島', '茨城', '栃木', '群馬',
+        '埼玉', '千葉', '東京', '神奈川', '新潟',
+        '富山', '石川', '福井', '山梨', '長野',
+        '岐阜', '静岡', '愛知', '三重', '滋賀',
+        '京都', '大阪', '兵庫', '奈良', '和歌山',
+        '鳥取', '島根', '岡山', '広島', '山口',
+        '徳島', '香川', '愛媛', '高知', '福岡',
+        '佐賀', '長崎', '熊本', '大分', '宮崎',
+        '鹿児島', '沖縄'
+    ]
 
     def __init__(self,
                  data: bytes,
@@ -488,9 +514,9 @@ class CSVLinter:
             klasses = {
                 'prefecture_number': False,
                 'prefecture_name': False,
-                'year_ad': False,
-                'time_code': False,
-                'year_jp': False,
+                'christian_era': False,
+                'datetime_code': False,
+                'jp_calendar_year': False,
                 'number': False,
                 'string': False,
                 'other': False
@@ -500,57 +526,82 @@ class CSVLinter:
             items_counter = {
                 'prefecture_number': 0,
                 'prefecture_name': 0,
-                'year_ad': 0,
-                'time_code': 0,
-                'year_jp': 0,
+                'christian_era': 0,
+                'datetime_code': 0,
+                'jp_calendar_year': 0,
                 'number': 0,
                 'string': 0,
                 'other': 0
             }
 
             for elem in column:
-                if self.__is_number(elem):
+                print(f"elem: {elem}, type: {type(elem)}")
+                print(f"is_number? -> {self.__is_number(elem)}")
+                if self.__is_empty(elem):
+                    empty_counter += 1
+
+                elif self.__is_number(elem):
                     items_counter['number'] += 1
+
                     if self.__is_prefecture_number(elem):
                         items_counter['prefecture_number'] += 1
-                    if self.__is_year_ad(elem):
-                        items_counter['year_ad'] += 1
-                    if self.__is_time_code(elem):
-                        items_counter['time_code'] += 1
-                elif self.__is_empty(elem):
-                    items_counter['empty'] += 1
-                else:
+
+                    if self.__is_match_regex(self.CHRISTIAN_ERA_REGEX, elem):
+                        items_counter['christian_era'] += 1
+
+                    if self.__is_match_regex(self.DATETIME_CODE_REGEX, elem):
+                        items_counter['datetime_code'] += 1
+                elif self.__is_string(elem):
                     items_counter['string'] += 1
+
                     if self.__is_prefecture_name(elem):
                         items_counter['prefecture_name'] += 1
-                    if self.__is_year_jp(elem):
-                        items_counter['year_jp'] += 1
+                else:
+                    if self.__is_jp_calendar_year(jeraconv.J2W(), elem):
+                        items_counter['jp_calendar_year'] += 1
+                        continue
 
-            for key, value in items_counter:
+                    items_counter['other'] += 1
+
+            print(f"items_counter: {items_counter}")
+
+            for key, value in items_counter.items():
                 if value / (len(self.df) - empty_counter) > self.CLASSIFY_RATE:
                     klasses[key] = True
 
-        # return classify_array
+            classify_array.append(klasses)
+
+        return classify_array
 
     def __is_number(self, elem):
-        pass
+        return self.__is_num(elem)
+
+    def __is_string(self, elem):
+        if self.__is_empty(elem):
+            return False
+
+        if self.__is_include_number(elem):
+            return False
+
+        return True
 
     def __is_prefecture_number(self, elem):
-        pass
+        if not self.__is_number(elem):
+            return False
 
-    def __is_year_ad(self, elem):
-        pass
+        return 0 < elem and elem <= 47
 
-    def __is_time_code(self, elem):
-        pass
+    def __is_match_regex(self, regex, elem):
+        result = regex.match(str(elem))
+        if result is None:
+            return False
+
+        return True
 
     def __is_prefecture_name(self, elem):
-        pass
+        return elem in (self.VALID_PREFECTURE_NAME + self.INVALID_PREFECTURE_NAME)
 
-    def __is_year_jp(self, elem):
-        pass
-
-    def calc_is_num_per_row(self, elem):
+    def calc_is_num_per_row(self):
         """
         返り値: [配列]列ごとの数値列であるかの真偽値
 
