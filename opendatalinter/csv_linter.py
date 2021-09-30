@@ -259,7 +259,8 @@ class CSVLinter:
     @before_check_1_1
     def check_1_10(self):
         """
-        機種依存⽂字を使⽤していないか
+        機種依存⽂字を使⽤していないか。
+        入力ファイルのエンコードがCP932かつshift_jisにデコードできない要素をinvalidとみなす。
         """
         if self.encoding == "CP932":
             dfs = [self.header_df, self.df]
