@@ -90,6 +90,7 @@ class CSVLinter:
             self.header_df = pd.read_csv(StringIO(self.header), header=None) \
                 if header_line_num != 0 else pd.DataFrame(np.empty(0))
             self.df = self.gen_df()
+            self.column_classify = self._column_classify()
             self.is_num_per_row = self.calc_is_num_per_row()
             print(self.is_num_per_row)
             print(self.title)
