@@ -568,8 +568,8 @@ class CSVLinter:
             }
 
             for elem in column:
-                print(f"elem: {elem}, type: {type(elem)}")
-                print(f"is_number? -> {self.__is_number(elem)}")
+                # print(f"elem: {elem}, type: {type(elem)}")
+                # print(f"is_number? -> {self.__is_number(elem)}")
                 if self.__is_empty(elem):
                     empty_counter += 1
 
@@ -596,11 +596,14 @@ class CSVLinter:
 
                     items_counter['other'] += 1
 
-            print(f"items_counter: {items_counter}")
+            # print(f"items_counter: {items_counter}")
 
             for key, value in items_counter.items():
-                if value / (len(self.df) - empty_counter) > self.CLASSIFY_RATE:
-                    klasses[key] = True
+                try:
+                    if value / (len(self.df) - empty_counter) > self.CLASSIFY_RATE:
+                        klasses[key] = True
+                except ZeroDivisionError:
+                    pass
 
             classify_array.append(klasses)
 
@@ -618,11 +621,17 @@ class CSVLinter:
 
         return True
 
-    def __is_prefecture_number(self, elem):
+    def __is_integer(self, elem):
         if not self.__is_number(elem):
             return False
 
-        return 0 < elem and elem <= 47
+        return float(elem).is_integer()
+
+    def __is_prefecture_number(self, elem):
+        if not self.__is_integer(elem):
+            return False
+
+        return 0 < int(float(elem)) and int(float(elem)) <= 47
 
     def __is_match_regex(self, regex, elem):
         result = regex.match(str(elem))
