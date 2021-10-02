@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 from jeraconv import jeraconv
 
-from .errors import TitleEstimateError, HeaderEstimateError
+from .csv_structure_analyzer import CSVStructureAnalyzer
+from .errors import HeaderEstimateError
 from .funcs import before_check_1_1, to_csv_format
 from .vo import LintResult, InvalidContent, InvalidCellFactory
 
@@ -44,11 +45,11 @@ class CSVLinter:
             self.data = data
             self.filename = filename
             self.text = self.__decode(data)
+            csv_structure_analyzer = CSVStructureAnalyzer(self.text)
             self.lines = [
                 to_csv_format(line) for line in csv.reader(StringIO(self.text))
             ]
-            self.title_line_num = self.estimate_title_line_num(
-            ) if title_line_num is None else title_line_num
+            self.title_line_num = csv_structure_analyzer.title_line_num if title_line_num is None else title_line_num
             self.header_line_num = self.estimate_header_line_num(
             ) if header_line_num is None else header_line_num
             self.header_invalid_cell_factory = InvalidCellFactory(
@@ -56,14 +57,12 @@ class CSVLinter:
             self.content_invalid_cell_factory = InvalidCellFactory(
                 self.title_line_num + self.header_line_num)
 
-            self.title = self.gen_title()
             self.header = self.gen_header()
             self.header_df = pd.read_csv(StringIO(self.header), header=None) \
                 if self.header_line_num != 0 else pd.DataFrame(np.empty(0))
             self.df = self.gen_df()
             self.is_num_per_row = self.calc_is_num_per_row()
             print(self.is_num_per_row)
-            print(self.title)
             print(self.header_df)
             print(self.df)
         except UnicodeDecodeError:
@@ -73,9 +72,6 @@ class CSVLinter:
             else:
                 self.cache["1-1"] = LintResult.gen_simple_error_result(
                     "文字コードが読み取れませんでした。文字コードがutf-8になっているか確認してください。")
-        except TitleEstimateError:
-            self.cache["1-1"] = LintResult.gen_simple_error_result(
-                "CSVファイルとして読み込めませんでした。CSVの形式として正しいかどうか確認してください。")
         except HeaderEstimateError:
             self.cache["1-1"] = LintResult.gen_simple_error_result(
                 "ヘッダー部分の推定に失敗しました。")
@@ -83,16 +79,6 @@ class CSVLinter:
             traceback.print_exc()
             self.cache["1-1"] = LintResult.gen_simple_error_result(
                 "未知のエラーが発生しました。お手数ですがサーバー運営者にお問い合わせください。")
-
-    def estimate_title_line_num(self):
-        for i in range(len(self.lines)):
-            try:
-                s = StringIO("\n".join(self.lines[i:]))
-                pd.read_csv(s, header=None)
-                return i
-            except Exception:
-                pass
-        raise TitleEstimateError()
 
     def estimate_header_line_num(self):
         df = pd.read_csv(StringIO("\n".join(self.lines[self.title_line_num:])),
@@ -106,9 +92,6 @@ class CSVLinter:
             if cnt > 0:
                 return i
         raise HeaderEstimateError()
-
-    def gen_title(self):
-        return "\n".join(self.lines[:self.title_line_num])
 
     def gen_header(self):
         return "\n".join(self.lines[self.title_line_num:self.title_line_num +
