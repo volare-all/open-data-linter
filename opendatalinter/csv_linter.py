@@ -1,18 +1,18 @@
 import csv
 import os
 import re
+import traceback
 from io import StringIO
 from typing import List, Pattern
-import traceback
 
 import chardet
 import numpy as np
 import pandas as pd
 from jeraconv import jeraconv
 
-from .vo import LintResult, InvalidContent, InvalidCellFactory
-from .funcs import to_csv_format, before_check_1_1
 from .errors import TitleEstimateError, HeaderEstimateError
+from .funcs import before_check_1_1, to_csv_format
+from .vo import LintResult, InvalidContent, InvalidCellFactory
 
 
 class CSVLinter:
@@ -47,12 +47,10 @@ class CSVLinter:
             self.lines = [
                 to_csv_format(line) for line in csv.reader(StringIO(self.text))
             ]
-            if title_line_num is None:
-                title_line_num = self.estimate_title_line_num()
-            self.title_line_num = title_line_num
-            if header_line_num is None:
-                header_line_num = self.estimate_header_line_num()
-            self.header_line_num = header_line_num
+            self.title_line_num = self.estimate_title_line_num(
+            ) if title_line_num is None else title_line_num
+            self.header_line_num = self.estimate_header_line_num(
+            ) if header_line_num is None else header_line_num
             self.header_invalid_cell_factory = InvalidCellFactory(
                 self.title_line_num)
             self.content_invalid_cell_factory = InvalidCellFactory(
@@ -61,7 +59,7 @@ class CSVLinter:
             self.title = self.gen_title()
             self.header = self.gen_header()
             self.header_df = pd.read_csv(StringIO(self.header), header=None) \
-                if header_line_num != 0 else pd.DataFrame(np.empty(0))
+                if self.header_line_num != 0 else pd.DataFrame(np.empty(0))
             self.df = self.gen_df()
             self.is_num_per_row = self.calc_is_num_per_row()
             print(self.is_num_per_row)
