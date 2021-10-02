@@ -2,6 +2,9 @@ import csv
 from io import StringIO
 from typing import List
 
+from .errors import HeaderEstimateError
+from .funcs import is_num
+
 
 class CSVStructureAnalyzer:
     def __init__(self, text: str, should_print_info: bool = False):
@@ -12,6 +15,7 @@ class CSVStructureAnalyzer:
 
         self.__content_range = self.__estimate_content_range()
         self.title_line_num = self.__content_range[0]
+        self.header_line_num = self.__estimate_header_line_num()
 
         if should_print_info:
             self.__print_debug_info()
@@ -42,10 +46,24 @@ class CSVStructureAnalyzer:
 
         return start_index, start_index + max_count
 
+    def __estimate_header_line_num(self):
+        cr = self.__content_range
+        for i, row in enumerate(self.__rows[cr[0]:cr[1]]):
+            for element in row:
+                if is_num(element):
+                    return i
+        raise HeaderEstimateError()
+
     def __print_debug_info(self):
         lines = list(map(self.__to_line, self.__rows))
-        print("========== Title ==========")
+        print(f"========== Title([0, {self.title_line_num})) ==========")
         print("\n".join(lines[:self.title_line_num]))
+
+        header_end = self.title_line_num + self.header_line_num
+        print(
+            f"========== Header([{self.title_line_num}, {header_end})) =========="
+        )
+        print("\n".join(lines[self.title_line_num:header_end]))
 
     @staticmethod
     def __to_line(row: List[str]):

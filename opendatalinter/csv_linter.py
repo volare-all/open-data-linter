@@ -12,7 +12,7 @@ from jeraconv import jeraconv
 
 from .csv_structure_analyzer import CSVStructureAnalyzer
 from .errors import HeaderEstimateError
-from .funcs import before_check_1_1, to_csv_format
+from .funcs import before_check_1_1, to_csv_format, is_num
 from .vo import LintResult, InvalidContent, InvalidCellFactory
 
 
@@ -50,8 +50,7 @@ class CSVLinter:
                 to_csv_format(line) for line in csv.reader(StringIO(self.text))
             ]
             self.title_line_num = csv_structure_analyzer.title_line_num if title_line_num is None else title_line_num
-            self.header_line_num = self.estimate_header_line_num(
-            ) if header_line_num is None else header_line_num
+            self.header_line_num = csv_structure_analyzer.header_line_num if header_line_num is None else header_line_num
             self.header_invalid_cell_factory = InvalidCellFactory(
                 self.title_line_num)
             self.content_invalid_cell_factory = InvalidCellFactory(
@@ -63,7 +62,6 @@ class CSVLinter:
             self.df = self.gen_df()
             self.is_num_per_row = self.calc_is_num_per_row()
             print(self.is_num_per_row)
-            print(self.header_df)
             print(self.df)
         except UnicodeDecodeError:
             if self.encoding == "utf-8":
@@ -79,19 +77,6 @@ class CSVLinter:
             traceback.print_exc()
             self.cache["1-1"] = LintResult.gen_simple_error_result(
                 "未知のエラーが発生しました。お手数ですがサーバー運営者にお問い合わせください。")
-
-    def estimate_header_line_num(self):
-        df = pd.read_csv(StringIO("\n".join(self.lines[self.title_line_num:])),
-                         header=None)
-        for i in range(len(df)):
-            row = df.iloc[i, :]
-            cnt = 0
-            for v in row:
-                if self.__is_num(v):
-                    cnt += 1
-            if cnt > 0:
-                return i
-        raise HeaderEstimateError()
 
     def gen_header(self):
         return "\n".join(self.lines[self.title_line_num:self.title_line_num +
@@ -166,7 +151,7 @@ class CSVLinter:
             column = self.df.iloc[:, i]
             if self.is_num_per_row[i]:
                 for j, elem in enumerate(column):
-                    if self.__is_num(elem):
+                    if is_num(elem):
                         continue
                     if self.__is_include_number(elem):
                         invalid_cells.append(
@@ -373,7 +358,7 @@ class CSVLinter:
                         if left_elem == prefectures_numbers[elem]:
                             continue
                         if type(left_elem) is str:
-                            if self.__is_num(left_elem):
+                            if is_num(left_elem):
                                 float_left_elem = float(left_elem)
                                 if float_left_elem.is_integer() and int(
                                         float_left_elem
@@ -385,7 +370,7 @@ class CSVLinter:
                         if right_elem == prefectures_numbers[elem]:
                             continue
                         if type(right_elem) is str:
-                            if self.__is_num(right_elem):
+                            if is_num(right_elem):
                                 float_right_elem = float(right_elem)
                                 if float_right_elem.is_integer() and int(
                                         float_right_elem
@@ -411,7 +396,7 @@ class CSVLinter:
             column = self.df.iloc[:, i]
             if self.is_num_per_row[i]:
                 for j, elem in enumerate(column):
-                    if self.__is_num(elem):
+                    if is_num(elem):
                         continue
                     if self.__is_empty(elem):
                         if elem == "***":
@@ -476,7 +461,7 @@ class CSVLinter:
                     empty_count += 1
                     continue
 
-                if self.__is_num(elem):
+                if is_num(elem):
                     integer_count += 1
                     continue
 
@@ -501,18 +486,6 @@ class CSVLinter:
         self.encoding = chardet.detect(data)['encoding']
         self.encoding = 'utf-8' if self.encoding is None else self.encoding
         return data.decode(encoding=self.encoding)
-
-    def __is_num(self, s):
-        """
-        数値に変換可能か判定
-        """
-        if pd.isnull(s):
-            return False
-        try:
-            float(s)
-        except ValueError:
-            return False
-        return True
 
     def __is_include_number(self, s):
         """

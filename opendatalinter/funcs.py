@@ -1,6 +1,8 @@
 import csv
 from io import StringIO
 
+import pandas as pd
+
 from .vo import LintResult
 
 
@@ -9,6 +11,19 @@ def to_csv_format(txt):
     writer = csv.writer(output)
     writer.writerow(txt)
     return output.getvalue()
+
+
+def is_num(s):
+    """
+    数値に変換可能か判定
+    """
+    if pd.isnull(s):
+        return False
+    try:
+        float(s)
+    except ValueError:
+        return False
+    return True
 
 
 def before_check_1_1(func):
