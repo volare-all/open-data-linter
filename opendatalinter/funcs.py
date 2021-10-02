@@ -1,16 +1,6 @@
-import csv
-from io import StringIO
-
 import pandas as pd
 
 from .vo import LintResult
-
-
-def to_csv_format(txt):
-    output = StringIO()
-    writer = csv.writer(output)
-    writer.writerow(txt)
-    return output.getvalue()
 
 
 def is_num(s):

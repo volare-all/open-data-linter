@@ -2,6 +2,10 @@ import csv
 from io import StringIO
 from typing import List
 
+import numpy as np
+import pandas as pd
+from pandas import DataFrame
+
 from .errors import HeaderEstimateError
 from .funcs import is_num
 
@@ -19,6 +23,15 @@ class CSVStructureAnalyzer:
 
         if should_print_info:
             self.__print_debug_info()
+
+    def gen_header_df(self) -> DataFrame:
+        if self.header_line_num == 0:
+            return pd.DataFrame(np.empty(0))
+
+        return pd.read_csv(StringIO(self.__get_header()), header=None)
+
+    def gen_rows_df(self) -> DataFrame:
+        return pd.read_csv(StringIO(self.__get_rows()), header=None)
 
     def __estimate_content_range(self) -> tuple[int, int]:
         """
@@ -52,6 +65,7 @@ class CSVStructureAnalyzer:
             for element in row:
                 if is_num(element):
                     return i
+        # TODO: Headerが存在しないケースも検討する
         raise HeaderEstimateError()
 
     def __print_debug_info(self):
@@ -63,7 +77,23 @@ class CSVStructureAnalyzer:
         print(
             f"========== Header([{self.title_line_num}, {header_end})) =========="
         )
-        print("\n".join(lines[self.title_line_num:header_end]))
+        print(self.__get_header())
+
+        rows_end = self.__content_range[1]
+        print(f"========== Rows([{header_end}, {rows_end})) ==========")
+        print(self.__get_rows())
+
+    def __get_header(self):
+        header_end = self.title_line_num + self.header_line_num
+        header_lines = map(self.__to_line,
+                           self.__rows[self.title_line_num:header_end])
+        return "".join(header_lines)
+
+    def __get_rows(self):
+        cr = self.__content_range
+        content_lines = map(self.__to_line,
+                            self.__rows[cr[0] + self.header_line_num:cr[1]])
+        return "".join(content_lines)
 
     @staticmethod
     def __to_line(row: List[str]):

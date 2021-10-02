@@ -1,8 +1,6 @@
-import csv
 import os
 import re
 import traceback
-from io import StringIO
 from typing import List, Pattern
 
 import chardet
@@ -12,7 +10,7 @@ from jeraconv import jeraconv
 
 from .csv_structure_analyzer import CSVStructureAnalyzer
 from .errors import HeaderEstimateError
-from .funcs import before_check_1_1, to_csv_format, is_num
+from .funcs import before_check_1_1, is_num
 from .vo import LintResult, InvalidContent, InvalidCellFactory
 
 
@@ -45,10 +43,8 @@ class CSVLinter:
             self.data = data
             self.filename = filename
             self.text = self.__decode(data)
+
             csv_structure_analyzer = CSVStructureAnalyzer(self.text)
-            self.lines = [
-                to_csv_format(line) for line in csv.reader(StringIO(self.text))
-            ]
             self.title_line_num = csv_structure_analyzer.title_line_num if title_line_num is None else title_line_num
             self.header_line_num = csv_structure_analyzer.header_line_num if header_line_num is None else header_line_num
             self.header_invalid_cell_factory = InvalidCellFactory(
@@ -56,13 +52,10 @@ class CSVLinter:
             self.content_invalid_cell_factory = InvalidCellFactory(
                 self.title_line_num + self.header_line_num)
 
-            self.header = self.gen_header()
-            self.header_df = pd.read_csv(StringIO(self.header), header=None) \
-                if self.header_line_num != 0 else pd.DataFrame(np.empty(0))
-            self.df = self.gen_df()
+            self.header_df = csv_structure_analyzer.gen_header_df()
+            self.df = csv_structure_analyzer.gen_rows_df()
             self.is_num_per_row = self.calc_is_num_per_row()
             print(self.is_num_per_row)
-            print(self.df)
         except UnicodeDecodeError:
             if self.encoding == "utf-8":
                 self.cache["1-1"] = LintResult.gen_simple_error_result(
@@ -77,15 +70,6 @@ class CSVLinter:
             traceback.print_exc()
             self.cache["1-1"] = LintResult.gen_simple_error_result(
                 "未知のエラーが発生しました。お手数ですがサーバー運営者にお問い合わせください。")
-
-    def gen_header(self):
-        return "\n".join(self.lines[self.title_line_num:self.title_line_num +
-                                    self.header_line_num])
-
-    def gen_df(self):
-        s = StringIO("\n".join(self.lines[self.title_line_num +
-                                          self.header_line_num:]))
-        return pd.read_csv(s, header=None)  # content のみが返る
 
     def check_1_1(self):
         """
