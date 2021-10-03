@@ -60,7 +60,7 @@ class ColumnType(Enum):
         return False
 
     @classmethod
-    def is_number(cls, column_type):
+    def is_string(cls, column_type):
         if column_type in [cls.PREFECTURE_NAME, cls.OTHER_STRING]:
             return True
         return False
