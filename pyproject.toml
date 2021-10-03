@@ -3,6 +3,9 @@ name = "open-data-linter"
 version = "0.1.0"
 description = ""
 authors = []
+packages = [
+    { include = "opendatalinter" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
