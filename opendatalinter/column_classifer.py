@@ -3,6 +3,15 @@ import pandas as pd
 from jeraconv import jeraconv
 from enum import Enum
 
+from .funcs import (is_number,
+                    is_string,
+                    is_prefecture_code,
+                    is_prefecture_name,
+                    is_match_regex,
+                    is_empty,
+                    is_jp_calendar_year
+                    )
+
 
 class ColumnType(Enum):
     PREFECTURE_CODE = 'prefecture_code'
@@ -81,27 +90,27 @@ class ColumnClassifer:
             }
 
             for elem in column:
-                if self.__is_empty(elem):
+                if is_empty(elem):
                     empty_counter += 1
 
-                elif self.__is_number(elem):
+                elif is_number(elem):
                     items_counter[ColumnType.NUMBER] += 1
 
-                    if self.__is_prefecture_code(elem):
+                    if is_prefecture_code(elem):
                         items_counter[ColumnType.PREFECTURE_CODE] += 1
 
-                    if self.__is_match_regex(self.CHRISTIAN_ERA_REGEX, elem):
+                    if is_match_regex(self.CHRISTIAN_ERA_REGEX, elem):
                         items_counter[ColumnType.CHRISTIAN_ERA] += 1
 
-                    if self.__is_match_regex(self.DATETIME_CODE_REGEX, elem):
+                    if is_match_regex(self.DATETIME_CODE_REGEX, elem):
                         items_counter[ColumnType.DATETIME_CODE] += 1
-                elif self.__is_string(elem):
+                elif is_string(elem):
                     items_counter[ColumnType.STRING] += 1
 
-                    if self.__is_prefecture_name(elem):
+                    if is_prefecture_name(elem):
                         items_counter[ColumnType.PREFECTURE_NAME] += 1
                 else:
-                    if self.__is_jp_calendar_year(jeraconv.J2W(), elem):
+                    if is_jp_calendar_year(jeraconv.J2W(), elem):
                         items_counter[ColumnType.JP_CALENDAR_YEAR] += 1
                         continue
 
@@ -119,86 +128,3 @@ class ColumnClassifer:
             result.append(classes)
 
         return result
-
-    def __is_number(self, elem):
-        """
-        数値に変換可能か判定
-        """
-        if pd.isnull(elem):
-            return False
-        try:
-            float(elem)
-        except ValueError:
-            return False
-        return True
-
-    def __is_string(self, elem):
-        """
-        数値を含まない文字列であるか判定
-        """
-        if self.__is_empty(elem):
-            return False
-
-        if self.__is_include_number(elem):
-            return False
-
-        return True
-
-    def __is_integer(self, elem):
-        """
-        整数に変換可能(小数点を含まない)であるか判定
-        """
-        if not self.__is_number(elem):
-            return False
-
-        return float(elem).is_integer()
-
-    def __is_prefecture_code(self, elem):
-        """
-        都道府県コードに含まれるか判定
-        """
-        if not self.__is_integer(elem):
-            return False
-
-        return 0 < int(float(elem)) and int(float(elem)) <= 47
-
-    def __is_prefecture_name(self, elem):
-        """
-        都道府県名であるか判定
-        """
-        return elem in (self.VALID_PREFECTURE_NAME + self.INVALID_PREFECTURE_NAME)
-
-    def __is_match_regex(self, regex, elem):
-        result = regex.match(str(elem))
-        if result is None:
-            return False
-
-        return True
-
-    def __is_empty(self, s):
-        """
-        sが空のセル相当であるか
-        TODO: str型以外の場合を検討していない(nullなど)
-        """
-        if pd.isnull(s):
-            return True
-        if type(s) is str and any(
-                [r.match(str(s)) is not None for r in self.EMPTY_REGEX_LIST]):
-            return True
-
-    def __is_include_number(self, s):
-        """
-        文字列sに数字が含まれているか
-        """
-        if pd.isnull(s):
-            return False
-
-        return any(map(str.isdigit, s))
-
-    @staticmethod
-    def __is_jp_calendar_year(j2w: jeraconv.J2W, year_str: str) -> bool:
-        try:
-            j2w.convert(year_str)
-            return True
-        except ValueError:
-            return False
