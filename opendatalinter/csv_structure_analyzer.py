@@ -7,7 +7,7 @@ import pandas as pd
 from pandas import DataFrame
 
 from .errors import HeaderEstimateError
-from .funcs import is_num
+from .funcs import is_number
 
 
 class CSVStructureAnalyzer:
@@ -63,7 +63,7 @@ class CSVStructureAnalyzer:
         cr = self.__content_range
         for i, row in enumerate(self.__rows[cr[0]:cr[1]]):
             for element in row:
-                if is_num(element):
+                if is_number(element):
                     return i
         # TODO: Headerが存在しないケースも検討する
         raise HeaderEstimateError()

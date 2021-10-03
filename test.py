@@ -2,6 +2,7 @@ import unittest
 
 from opendatalinter import CSVLinter, ExcelLinter
 from opendatalinter.vo import LintResult
+from opendatalinter.column_classifer import ColumnType
 
 
 def gen_csv_linter(file_path: str) -> CSVLinter:
@@ -23,6 +24,7 @@ class TestCsvLinter(unittest.TestCase):
         cls.perfect = gen_csv_linter("samples/perfect.csv")
         cls.text = gen_csv_linter("samples/text.txt")
         cls.check_1_2 = gen_csv_linter("samples/check_1_2.csv")
+        cls.classify_sample = gen_csv_linter("samples/classify_sample.csv")
 
     def test_empty_header(self):
         linter = gen_csv_linter("samples/all_num.csv")
@@ -122,6 +124,19 @@ class TestCsvLinter(unittest.TestCase):
     def assertValidLintResult(self, result: LintResult):
         self.assertTrue(result.is_valid)
         self.assertEqual(0, len(result.invalid_contents))
+
+    def test_column_classify(self):
+
+        linter = gen_csv_linter("samples/classify_sample.csv")
+        classify_array = linter.column_classify
+        self.assertEqual(classify_array[0], ColumnType.PREFECTURE_CODE)
+        self.assertEqual(classify_array[2], ColumnType.PREFECTURE_NAME)
+        self.assertEqual(classify_array[4], ColumnType.CHRISTIAN_ERA)
+        self.assertEqual(classify_array[6], ColumnType.DATETIME_CODE)
+        self.assertEqual(classify_array[8], ColumnType.JP_CALENDAR_YEAR)
+        self.assertEqual(classify_array[10], ColumnType.OTHER_NUMBER)
+        self.assertEqual(classify_array[12], ColumnType.OTHER_STRING)
+        self.assertEqual(classify_array[14], ColumnType.NONE_CATEGORY)
 
 
 class TestExcelLinter(unittest.TestCase):
