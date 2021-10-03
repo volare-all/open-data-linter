@@ -5,7 +5,6 @@ from typing import List
 
 import chardet
 import numpy as np
-import pandas as pd
 from jeraconv import jeraconv
 
 from .csv_structure_analyzer import CSVStructureAnalyzer

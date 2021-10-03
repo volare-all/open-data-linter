@@ -1,5 +1,3 @@
-import re
-import pandas as pd
 from jeraconv import jeraconv
 from enum import Enum
 
@@ -90,17 +88,6 @@ class ColumnClassifer:
 
         for i in range(len(self.df.columns)):
             column = self.df.iloc[:, i]
-
-            classes = {
-                ColumnType.PREFECTURE_CODE: False,
-                ColumnType.PREFECTURE_NAME: False,
-                ColumnType.CHRISTIAN_ERA: False,
-                ColumnType.DATETIME_CODE: False,
-                ColumnType.JP_CALENDAR_YEAR: False,
-                ColumnType.OTHER_NUMBER: False,
-                ColumnType.OTHER_STRING: False,
-                ColumnType.NONE_CATEGORY: False
-            }
 
             empty_counter = 0  # 空データに該当するもの
             items_counter = {
