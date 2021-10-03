@@ -15,7 +15,13 @@ from .funcs import (before_check_1_1,
                     is_empty,
                     is_include_number,
                     is_jp_calendar_year,
-                    is_valid_date
+                    is_valid_date,
+                    )
+from .regex import (SPACES_AND_LINE_BREAK_REGEX,
+                    DATETIME_CODE_REGEX,
+                    CHRISTIAN_ERA_REGEX,
+                    NUM_WITH_BRACKETS_REGEX,
+                    NUM_WITH_NUM_REGEX,
                     )
 from .vo import LintResult, InvalidContent, InvalidCellFactory
 from .column_classifer import ColumnClassifer, ColumnType
@@ -24,41 +30,6 @@ from .column_classifer import ColumnClassifer, ColumnType
 class CSVLinter:
     INTEGER_RATE = 0.8  # 列を数値列か判定する基準(数値が含まれているセル数 / 列の長さ)
     CLASSIFY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ + 空のセル))
-    # セルの文字列のうち, 空として扱うもの
-    EMPTY_REGEX_LIST = list(
-        map(lambda s: re.compile(s), [r'^\s*$', '-', 'ー', 'なし']))
-
-    SPACES_AND_LINE_BREAK_REGEX = re.compile(r'.*[\s\n].*')
-    DATETIME_CODE_REGEX = re.compile(r"^(\d{4})[01][012]\d{4}$")
-    CHRISTIAN_ERA_REGEX = re.compile(r"^(\d{1,4})年?$")
-    NUM_WITH_BRACKETS_REGEX = re.compile(r"^(\d+?)(\s*?)[\(（)](.+?)[\)）]")
-    NUM_WITH_NUM_REGEX = re.compile(r"^(\d+?)((\s+?)(\d+?))+?")
-
-    VALID_PREFECTURE_NAME = [
-        '北海道', '青森県', '岩手県', '宮城県', '秋田県',
-        '山形県', '福島県', '茨城県', '栃木県', '群馬県',
-        '埼玉県', '千葉県', '東京都', '神奈川県', '新潟県',
-        '富山県', '石川県', '福井県', '山梨県', '長野県',
-        '岐阜県', '静岡県', '愛知県', '三重県', '滋賀県',
-        '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県',
-        '鳥取県', '島根県', '岡山県', '広島県', '山口県',
-        '徳島県', '香川県', '愛媛県', '高知県', '福岡県',
-        '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県',
-        '鹿児島県', '沖縄県'
-    ]
-
-    INVALID_PREFECTURE_NAME = [
-        '青森', '岩手', '宮城', '秋田',
-        '山形', '福島', '茨城', '栃木', '群馬',
-        '埼玉', '千葉', '東京', '神奈川', '新潟',
-        '富山', '石川', '福井', '山梨', '長野',
-        '岐阜', '静岡', '愛知', '三重', '滋賀',
-        '京都', '大阪', '兵庫', '奈良', '和歌山',
-        '鳥取', '島根', '岡山', '広島', '山口',
-        '徳島', '香川', '愛媛', '高知', '福岡',
-        '佐賀', '長崎', '熊本', '大分', '宮崎',
-        '鹿児島', '沖縄'
-    ]
 
     def __init__(self,
                  data: bytes,
@@ -129,7 +100,7 @@ class CSVLinter:
                 elms = re.split("[、,]", v)
                 if len(elms) > 1:
                     for elm in elms:
-                        m = self.NUM_WITH_BRACKETS_REGEX.match(
+                        m = NUM_WITH_BRACKETS_REGEX.match(
                             elm.strip())  # todo: もっと広いケースで通るように
                         if m is not None:
                             comma_separated_invalid_cells.append(
@@ -137,8 +108,8 @@ class CSVLinter:
                             break
                 else:
                     for r in [
-                            self.NUM_WITH_BRACKETS_REGEX,
-                            self.NUM_WITH_NUM_REGEX
+                            NUM_WITH_BRACKETS_REGEX,
+                            NUM_WITH_NUM_REGEX
                     ]:
                         m = r.match(v.strip())
                         if m is not None:
@@ -193,7 +164,7 @@ class CSVLinter:
             (self.df, self.content_invalid_cell_factory)
         ]:
             is_formatted = df.applymap(
-                lambda cell: self.SPACES_AND_LINE_BREAK_REGEX.match(str(
+                lambda cell: SPACES_AND_LINE_BREAK_REGEX.match(str(
                     cell)) is not None)
             indices = list(np.argwhere(is_formatted.values))
             invalid_cells.extend(
@@ -253,9 +224,9 @@ class CSVLinter:
         """
         def is_valid_cell(cell: str, year: int) -> bool:
             is_valid_for_datetime_code = is_valid_date(
-                cell, self.DATETIME_CODE_REGEX, year)
+                cell, DATETIME_CODE_REGEX, year)
             is_valid_for_christian_era = is_valid_date(
-                cell, self.CHRISTIAN_ERA_REGEX, year)
+                cell, CHRISTIAN_ERA_REGEX, year)
             return is_valid_for_datetime_code or is_valid_for_christian_era
 
         j2w = jeraconv.J2W()

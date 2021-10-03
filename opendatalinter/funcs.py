@@ -2,6 +2,10 @@ import pandas as pd
 from jeraconv import jeraconv
 from typing import Pattern
 
+from .regex import (EMPTY_REGEX_LIST,
+                    VALID_PREFECTURE_NAME,
+                    INVALID_PREFECTURE_NAME,
+                    )
 from .vo import LintResult
 
 
