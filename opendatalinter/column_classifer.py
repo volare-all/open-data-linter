@@ -20,36 +20,6 @@ class ColumnType(Enum):
     NONE_CATEGORY = 'none_category'
 
     @classmethod
-    def is_prefecture_code(cls, column_type):
-        if column_type in [cls.PREFECTURE_CODE]:
-            return True
-        return False
-
-    @classmethod
-    def is_prefecture_name(cls, column_type):
-        if column_type in [cls.PREFECTURE_NAME]:
-            return True
-        return False
-
-    @classmethod
-    def is_christian_era(cls, column_type):
-        if column_type in [cls.CHRISTIAN_ERA, cls.PREFECTURE_CODE]:
-            return True
-        return False
-
-    @classmethod
-    def is_datetime_code(cls, column_type):
-        if column_type in [cls.DATETIME_CODE]:
-            return True
-        return False
-
-    @classmethod
-    def is_jp_calendar_year(cls, column_type):
-        if column_type in [cls.JP_CALENDAR_YEAR]:
-            return True
-        return False
-
-    @classmethod
     def is_number(cls, column_type):
         if column_type in [
                 cls.PREFECTURE_CODE, cls.CHRISTIAN_ERA, cls.DATETIME_CODE,
