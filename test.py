@@ -129,6 +129,18 @@ class TestExcelLinter(unittest.TestCase):
         linter = gen_excel_linter("./samples/since2003_visitor_arrivals.xlsx")
         self.assertTrue(linter.check_1_1().is_valid)
 
+    def test_check_1_4(self):
+        linter = gen_excel_linter("./samples/since2003_visitor_arrivals.xlsx")
+        result = linter.check_1_4()
+        self.assertFalse(result.is_valid)
+        expected = []
+        for i in range(3, 18):
+            expected.append((i, 0))
+        for i in range(21, 57):
+            expected.append((i, 0))
+        self.assertSetEqual(set(expected),
+                            set(result.invalid_contents[0].invalid_cells))
+
     def test_check_1_7(self):
         linter = gen_excel_linter("samples/expression.xlsx")
         result = linter.check_1_7()
