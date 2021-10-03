@@ -43,7 +43,7 @@ class ColumnClassifer:
         self.classify_rate = self.DEFAULT_CLASSIFY_RATE if classify_rate is None else classify_rate
 
     def perform(self, j2w):
-        def is_match_category(category):
+        def is_match_category(category, items_counter, empty_counter):
             try:
                 if items_counter[category] / (
                         len(self.df) - empty_counter) > self.classify_rate:
@@ -96,15 +96,13 @@ class ColumnClassifer:
 
                     items_counter[ColumnType.NONE_CATEGORY] += 1
 
-            # print(f"items_counter: {items_counter}")
-
-            if is_match_category(ColumnType.OTHER_NUMBER):
-                if is_match_category(ColumnType.DATETIME_CODE):
+            if is_match_category(ColumnType.OTHER_NUMBER, items_counter, empty_counter):
+                if is_match_category(ColumnType.DATETIME_CODE, items_counter, empty_counter):
                     result.append(ColumnType.DATETIME_CODE)
                     continue
 
-                if is_match_category(ColumnType.CHRISTIAN_ERA):
-                    if is_match_category(ColumnType.PREFECTURE_CODE):
+                if is_match_category(ColumnType.CHRISTIAN_ERA, items_counter, empty_counter):
+                    if is_match_category(ColumnType.PREFECTURE_CODE, items_counter, empty_counter):
                         result.append(ColumnType.PREFECTURE_CODE)
                         continue
 
@@ -114,15 +112,15 @@ class ColumnClassifer:
                 result.append(ColumnType.OTHER_NUMBER)
                 continue
 
-            if is_match_category(ColumnType.OTHER_STRING):
-                if is_match_category(ColumnType.PREFECTURE_NAME):
+            if is_match_category(ColumnType.OTHER_STRING, items_counter, empty_counter):
+                if is_match_category(ColumnType.PREFECTURE_NAME, items_counter, empty_counter):
                     result.append(ColumnType.PREFECTURE_NAME)
                     continue
 
                 result.append(ColumnType.OTHER_STRING)
                 continue
 
-            if is_match_category(ColumnType.JP_CALENDAR_YEAR):
+            if is_match_category(ColumnType.JP_CALENDAR_YEAR, items_counter, empty_counter):
                 result.append(ColumnType.JP_CALENDAR_YEAR)
                 continue
 
