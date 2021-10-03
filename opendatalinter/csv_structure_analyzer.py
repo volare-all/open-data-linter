@@ -33,7 +33,8 @@ class CSVStructureAnalyzer:
     def gen_rows_df(self) -> DataFrame:
         return pd.read_csv(StringIO(self.__get_rows()), header=None)
 
-    def __estimate_content_range(self) -> tuple[int, int]:
+    # def __estimate_content_range(self) -> tuple[int, int]:
+    def __estimate_content_range(self):
         """
         行ごとにカンマで区切られた要素の数を計算し、同じ数が最も連続している部分をContentと判別
         :return: Contentが含まれる行のレンジ(inclusive, exclusive)
