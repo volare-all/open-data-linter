@@ -9,19 +9,21 @@ from jeraconv import jeraconv
 
 from .csv_structure_analyzer import CSVStructureAnalyzer
 from .errors import HeaderEstimateError
-from .funcs import (before_check_1_1,
-                    is_number,
-                    is_empty,
-                    is_include_number,
-                    is_jp_calendar_year,
-                    is_valid_date,
-                    )
-from .regex import (SPACES_AND_LINE_BREAK_REGEX,
-                    DATETIME_CODE_REGEX,
-                    CHRISTIAN_ERA_REGEX,
-                    NUM_WITH_BRACKETS_REGEX,
-                    NUM_WITH_NUM_REGEX,
-                    )
+from .funcs import (
+    before_check_1_1,
+    is_number,
+    is_empty,
+    is_include_number,
+    is_jp_calendar_year,
+    is_valid_date,
+)
+from .regex import (
+    SPACES_AND_LINE_BREAK_REGEX,
+    DATETIME_CODE_REGEX,
+    CHRISTIAN_ERA_REGEX,
+    NUM_WITH_BRACKETS_REGEX,
+    NUM_WITH_NUM_REGEX,
+)
 from .vo import LintResult, InvalidContent, InvalidCellFactory
 from .column_classifer import ColumnClassifer, ColumnType
 
@@ -85,7 +87,7 @@ class CSVLinter:
             self.cache["1-1"] = LintResult(True, [])
         return self.cache["1-1"]
 
-    @ before_check_1_1
+    @before_check_1_1
     def check_1_2(self):
         """
         １セル１データとなっているか
@@ -107,10 +109,7 @@ class CSVLinter:
                                 self.content_invalid_cell_factory.create(i, j))
                             break
                 else:
-                    for r in [
-                            NUM_WITH_BRACKETS_REGEX,
-                            NUM_WITH_NUM_REGEX
-                    ]:
+                    for r in [NUM_WITH_BRACKETS_REGEX, NUM_WITH_NUM_REGEX]:
                         m = r.match(v.strip())
                         if m is not None:
                             num_with_brackets_invalid_cells.append(
@@ -127,7 +126,7 @@ class CSVLinter:
 
         return LintResult(not (bool(len(invalid_contents))), invalid_contents)
 
-    @ before_check_1_1
+    @before_check_1_1
     def check_1_3(self):
         """
         数値データは数値属性とし、⽂字列を含まないこと
@@ -152,7 +151,7 @@ class CSVLinter:
         return LintResult.gen_single_error_message_result(
             "数値データに文字が含まれています", invalid_cells)
 
-    @ before_check_1_1
+    @before_check_1_1
     def check_1_5(self):
         """
         スペースや改⾏等で体裁を整えていないか。
@@ -163,9 +162,8 @@ class CSVLinter:
             (self.header_df, self.header_invalid_cell_factory),
             (self.df, self.content_invalid_cell_factory)
         ]:
-            is_formatted = df.applymap(
-                lambda cell: SPACES_AND_LINE_BREAK_REGEX.match(str(
-                    cell)) is not None)
+            is_formatted = df.applymap(lambda cell: SPACES_AND_LINE_BREAK_REGEX
+                                       .match(str(cell)) is not None)
             indices = list(np.argwhere(is_formatted.values))
             invalid_cells.extend(
                 map(lambda i: invalid_cell_factory.create(i[0], i[1]),
@@ -174,7 +172,7 @@ class CSVLinter:
         return LintResult.gen_single_error_message_result(
             "スペースや改⾏が含まれています", invalid_cells)
 
-    @ before_check_1_1
+    @before_check_1_1
     def check_1_6(self):
         """
         項⽬名等を省略していないか(ヘッダに欠損データがないか)
@@ -185,7 +183,7 @@ class CSVLinter:
         return LintResult.gen_single_error_message_result(
             "ヘッダーに空欄があります", invalid_cells)
 
-    @ before_check_1_1
+    @before_check_1_1
     def check_1_10(self):
         """
         機種依存⽂字を使⽤していないか。
@@ -217,16 +215,18 @@ class CSVLinter:
         except UnicodeDecodeError:
             return False
 
-    @ before_check_1_1
+    @before_check_1_1
     def check_1_11(self):
         """
         e-Stat の時間軸コードの表記、⻄暦表記⼜は和暦に⻄暦の併記がされているか
         """
         def is_valid_cell(cell: str, year: int) -> bool:
-            is_valid_for_datetime_code = is_valid_date(
-                cell, DATETIME_CODE_REGEX, year)
-            is_valid_for_christian_era = is_valid_date(
-                cell, CHRISTIAN_ERA_REGEX, year)
+            is_valid_for_datetime_code = is_valid_date(cell,
+                                                       DATETIME_CODE_REGEX,
+                                                       year)
+            is_valid_for_christian_era = is_valid_date(cell,
+                                                       CHRISTIAN_ERA_REGEX,
+                                                       year)
             return is_valid_for_datetime_code or is_valid_for_christian_era
 
         j2w = jeraconv.J2W()
@@ -258,7 +258,7 @@ class CSVLinter:
         return np.squeeze(np.argwhere(is_jp_calendar_columns.values),
                           axis=1).tolist()
 
-    @ before_check_1_1
+    @before_check_1_1
     def check_1_12(self):
         """
         地域コード⼜は地域名称が表記されているか（都道府県名の表記揺れ）
@@ -357,7 +357,7 @@ class CSVLinter:
         return LintResult.gen_single_error_message_result(
             "地域名称が正しく表記されていません．", invalid_cells)
 
-    @ before_check_1_1
+    @before_check_1_1
     def check_1_13(self):
         """
         数値データの同⼀列内に特殊記号（秘匿等）が含まれる場合
@@ -382,7 +382,7 @@ class CSVLinter:
         return LintResult.gen_single_error_message_result(
             "空の数値データに適切な記号が入っていません．", invalid_cells)
 
-    @ before_check_1_1
+    @before_check_1_1
     def check_2_1(self):
         """
         データが分断されていないか
@@ -449,7 +449,7 @@ class CSVLinter:
             # print(f"len(df): {len(self.df)}")
             try:
                 if (integer_count /
-                        (len(self.df) - empty_count)) > self.INTEGER_RATE:
+                    (len(self.df) - empty_count)) > self.INTEGER_RATE:
                     array.append(True)
                 else:
                     array.append(False)

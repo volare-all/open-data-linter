@@ -1,17 +1,13 @@
 from jeraconv import jeraconv
 from enum import Enum
 
-from .funcs import (is_number,
-                    is_string,
-                    is_prefecture_code,
-                    is_prefecture_name,
-                    is_match_regex,
-                    is_empty,
-                    is_jp_calendar_year
-                    )
-from .regex import (CHRISTIAN_ERA_REGEX,
-                    DATETIME_CODE_REGEX,
-                    )
+from .funcs import (is_number, is_string, is_prefecture_code,
+                    is_prefecture_name, is_match_regex, is_empty,
+                    is_jp_calendar_year)
+from .regex import (
+    CHRISTIAN_ERA_REGEX,
+    DATETIME_CODE_REGEX,
+)
 
 
 class ColumnType(Enum):
@@ -56,7 +52,10 @@ class ColumnType(Enum):
 
     @classmethod
     def is_number(cls, column_type):
-        if column_type in [cls.PREFECTURE_CODE, cls.CHRISTIAN_ERA, cls.DATETIME_CODE, cls.OTHER_NUMBER]:
+        if column_type in [
+                cls.PREFECTURE_CODE, cls.CHRISTIAN_ERA, cls.DATETIME_CODE,
+                cls.OTHER_NUMBER
+        ]:
             return True
         return False
 
@@ -75,10 +74,10 @@ class ColumnClassifer:
         self.classify_rate = self.DEFAULT_CLASSIFY_RATE if classify_rate is None else classify_rate
 
     def perform(self):
-
         def is_match_category(category):
             try:
-                if items_counter[category] / (len(self.df) - empty_counter) > self.classify_rate:
+                if items_counter[category] / (
+                        len(self.df) - empty_counter) > self.classify_rate:
                     return True
             except:
                 pass

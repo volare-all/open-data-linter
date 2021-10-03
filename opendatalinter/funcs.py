@@ -2,10 +2,11 @@ import pandas as pd
 from jeraconv import jeraconv
 from typing import Pattern
 
-from .regex import (EMPTY_REGEX_LIST,
-                    VALID_PREFECTURE_NAME,
-                    INVALID_PREFECTURE_NAME,
-                    )
+from .regex import (
+    EMPTY_REGEX_LIST,
+    VALID_PREFECTURE_NAME,
+    INVALID_PREFECTURE_NAME,
+)
 from .vo import LintResult
 
 
@@ -78,7 +79,7 @@ def is_empty(elem):
     if pd.isnull(elem):
         return True
     if type(elem) is str and any(
-            [r.match(str(elem)) is not None for r in EMPTY_REGEX_LIST]):
+        [r.match(str(elem)) is not None for r in EMPTY_REGEX_LIST]):
         return True
 
 
