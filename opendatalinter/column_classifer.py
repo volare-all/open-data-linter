@@ -72,7 +72,7 @@ class ColumnClassifer:
 
     def __init__(self, df, classify_rate=None):
         self.df = df
-        self.classify_rate = classify_rate if not classify_rate is None else self.DEFAULT_CLASSIFY_RATE
+        self.classify_rate = self.DEFAULT_CLASSIFY_RATE if classify_rate is None else classify_rate
 
     def perform(self):
 
