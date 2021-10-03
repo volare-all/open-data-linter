@@ -28,7 +28,7 @@ from .column_classifer import ColumnClassifer, ColumnType
 
 class CSVLinter:
     INTEGER_RATE = 0.8  # 列を数値列か判定する基準(数値が含まれているセル数 / 列の長さ)
-    CLASSIFY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ + 空のセル))
+    CLASSIFY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ - 空のセル))
 
     def __init__(self,
                  data: bytes,
