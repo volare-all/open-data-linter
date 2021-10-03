@@ -1,4 +1,3 @@
-from jeraconv import jeraconv
 from enum import Enum
 
 from .funcs import (is_number, is_string, is_prefecture_code,
