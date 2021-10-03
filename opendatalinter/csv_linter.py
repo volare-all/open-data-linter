@@ -36,7 +36,7 @@ class CSVLinter:
         exp = os.path.splitext(filename)[1]
         if exp not in [".csv", ".CSV"]:
             self.cache["1-1"] = LintResult.gen_simple_error_result(
-                "csv形式のファイルを用意してください。")
+                "ファイルが読み込めませんでした。ファイル形式が Excel か CSV となっているか確認してください。")
             return
 
         try:
