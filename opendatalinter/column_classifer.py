@@ -13,8 +13,6 @@ from .funcs import (is_number,
                     )
 from .regex import (CHRISTIAN_ERA_REGEX,
                     DATETIME_CODE_REGEX,
-                    VALID_PREFECTURE_NAME,
-                    INVALID_PREFECTURE_NAME
                     )
 
 
@@ -30,10 +28,11 @@ class ColumnType(Enum):
 
 
 class ColumnClassifer:
-    CLASSIFY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ - 空のセル))
+    DEFAULT_CLASSIFY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ - 空のセル))
 
-    def __init__(self, df):
+    def __init__(self, df, classify_rate=None):
         self.df = df
+        self.classify_rate = classify_rate if not classify_rate is None else self.DEFAULT_CLASSIFY_RATE
 
     def perform(self):
         result = []
@@ -95,7 +94,7 @@ class ColumnClassifer:
 
             for key, value in items_counter.items():
                 try:
-                    if value / (len(self.df) - empty_counter) > self.CLASSIFY_RATE:
+                    if value / (len(self.df) - empty_counter) > self.classify_rate:
                         classes[key] = True
                 except ZeroDivisionError:
                     pass

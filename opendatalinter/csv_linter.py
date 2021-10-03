@@ -59,7 +59,8 @@ class CSVLinter:
 
             self.header_df = csv_structure_analyzer.gen_header_df()
             self.df = csv_structure_analyzer.gen_rows_df()
-            self.column_classify = ColumnClassifer(self.df).perform()
+            self.column_classify = ColumnClassifer(
+                self.df, self.CLASSIFY_RATE).perform()
             self.is_num_per_row = self.calc_is_num_per_row()
             print(self.is_num_per_row)
         except UnicodeDecodeError:
