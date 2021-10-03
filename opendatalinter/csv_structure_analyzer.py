@@ -1,6 +1,6 @@
 import csv
 from io import StringIO
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -33,7 +33,7 @@ class CSVStructureAnalyzer:
     def gen_rows_df(self) -> DataFrame:
         return pd.read_csv(StringIO(self.__get_rows()), header=None)
 
-    def __estimate_content_range(self) -> tuple[int, int]:
+    def __estimate_content_range(self) -> Tuple[int, int]:
         """
         行ごとにカンマで区切られた要素の数を計算し、同じ数が最も連続している部分をContentと判別
         :return: Contentが含まれる行のレンジ(inclusive, exclusive)
