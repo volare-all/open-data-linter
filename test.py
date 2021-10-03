@@ -129,97 +129,14 @@ class TestCsvLinter(unittest.TestCase):
 
         linter = gen_csv_linter("samples/classify_sample.csv")
         classify_array = linter.column_classify
-        self.assertEqual(classify_array[0], {
-            ColumnType.PREFECTURE_CODE: True,
-            ColumnType.PREFECTURE_NAME: False,
-            ColumnType.CHRISTIAN_ERA: True,
-            ColumnType.DATETIME_CODE: False,
-            ColumnType.JP_CALENDAR_YEAR: False,
-            ColumnType.NUMBER: True,
-            ColumnType.STRING: False,
-            ColumnType.OTHER: False})
-
-        # linter = gen_csv_linter("samples/classify_sample.csv")
-        # classify_array = linter._column_classify()
-        # self.assertEqual(classify_array[0], {
-        #     'prefecture_number': True,
-        #     'prefecture_name': False,
-        #     'christian_era': True,
-        #     'datetime_code': False,
-        #     'jp_calendar_year': False,
-        #     'number': True,
-        #     'string': False,
-        #     'other': False})
-
-        # self.assertEqual(classify_array[2], {
-        #     'prefecture_number': False,
-        #     'prefecture_name': True,
-        #     'christian_era': False,
-        #     'datetime_code': False,
-        #     'jp_calendar_year': False,
-        #     'number': False,
-        #     'string': True,
-        #     'other': False})
-
-        # self.assertEqual(classify_array[4], {
-        #     'prefecture_number': False,
-        #     'prefecture_name': False,
-        #     'christian_era': True,
-        #     'datetime_code': False,
-        #     'jp_calendar_year': False,
-        #     'number': True,
-        #     'string': False,
-        #     'other': False})
-
-        # self.assertEqual(classify_array[6], {
-        #     'prefecture_number': False,
-        #     'prefecture_name': False,
-        #     'christian_era': False,
-        #     'datetime_code': True,
-        #     'jp_calendar_year': False,
-        #     'number': True,
-        #     'string': False,
-        #     'other': False})
-
-        # self.assertEqual(classify_array[8], {
-        #     'prefecture_number': False,
-        #     'prefecture_name': False,
-        #     'christian_era': False,
-        #     'datetime_code': False,
-        #     'jp_calendar_year': True,
-        #     'number': False,
-        #     'string': False,
-        #     'other': False})
-
-        # self.assertEqual(classify_array[10], {
-        #     'prefecture_number': False,
-        #     'prefecture_name': False,
-        #     'christian_era': False,
-        #     'datetime_code': False,
-        #     'jp_calendar_year': False,
-        #     'number': True,
-        #     'string': False,
-        #     'other': False})
-
-        # self.assertEqual(classify_array[12], {
-        #     'prefecture_number': False,
-        #     'prefecture_name': False,
-        #     'christian_era': False,
-        #     'datetime_code': False,
-        #     'jp_calendar_year': False,
-        #     'number': False,
-        #     'string': True,
-        #     'other': False})
-
-        # self.assertEqual(classify_array[14], {
-        #     'prefecture_number': False,
-        #     'prefecture_name': False,
-        #     'christian_era': False,
-        #     'datetime_code': False,
-        #     'jp_calendar_year': False,
-        #     'number': False,
-        #     'string': False,
-        #     'other': True})
+        self.assertEqual(classify_array[0], ColumnType.PREFECTURE_CODE)
+        self.assertEqual(classify_array[2], ColumnType.PREFECTURE_NAME)
+        self.assertEqual(classify_array[4], ColumnType.CHRISTIAN_ERA)
+        self.assertEqual(classify_array[6], ColumnType.DATETIME_CODE)
+        self.assertEqual(classify_array[8], ColumnType.JP_CALENDAR_YEAR)
+        self.assertEqual(classify_array[10], ColumnType.OTHER_NUMBER)
+        self.assertEqual(classify_array[12], ColumnType.OTHER_STRING)
+        self.assertEqual(classify_array[14], ColumnType.NONE_CATEGORY)
 
 
 class TestExcelLinter(unittest.TestCase):
