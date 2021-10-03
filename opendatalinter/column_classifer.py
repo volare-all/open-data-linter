@@ -22,9 +22,9 @@ class ColumnType(Enum):
     CHRISTIAN_ERA = 'christian_era'
     DATETIME_CODE = 'datetime_code'
     JP_CALENDAR_YEAR = 'jp_calendar_year'
-    NUMBER = 'number'
-    STRING = 'string'
-    OTHER = 'other'
+    OTHER_NUMBER = 'other_number'
+    OTHER_STRING = 'other_string'
+    NONE_CATEGORY = 'none_category'
 
 
 class ColumnClassifer:
@@ -35,6 +35,15 @@ class ColumnClassifer:
         self.classify_rate = classify_rate if not classify_rate is None else self.DEFAULT_CLASSIFY_RATE
 
     def perform(self):
+
+        def is_match_category(category):
+            try:
+                if items_counter[category] / (len(self.df) - empty_counter) > self.classify_rate:
+                    return True
+            except:
+                pass
+            return False
+
         result = []
 
         for i in range(len(self.df.columns)):
@@ -46,9 +55,9 @@ class ColumnClassifer:
                 ColumnType.CHRISTIAN_ERA: False,
                 ColumnType.DATETIME_CODE: False,
                 ColumnType.JP_CALENDAR_YEAR: False,
-                ColumnType.NUMBER: False,
-                ColumnType.STRING: False,
-                ColumnType.OTHER: False
+                ColumnType.OTHER_NUMBER: False,
+                ColumnType.OTHER_STRING: False,
+                ColumnType.NONE_CATEGORY: False
             }
 
             empty_counter = 0  # 空データに該当するもの
@@ -58,9 +67,9 @@ class ColumnClassifer:
                 ColumnType.CHRISTIAN_ERA: 0,
                 ColumnType.DATETIME_CODE: 0,
                 ColumnType.JP_CALENDAR_YEAR: 0,
-                ColumnType.NUMBER: 0,
-                ColumnType.STRING: 0,
-                ColumnType.OTHER: 0
+                ColumnType.OTHER_NUMBER: 0,
+                ColumnType.OTHER_STRING: 0,
+                ColumnType.NONE_CATEGORY: 0
             }
 
             for elem in column:
@@ -68,7 +77,7 @@ class ColumnClassifer:
                     empty_counter += 1
 
                 elif is_number(elem):
-                    items_counter[ColumnType.NUMBER] += 1
+                    items_counter[ColumnType.OTHER_NUMBER] += 1
 
                     if is_prefecture_code(elem):
                         items_counter[ColumnType.PREFECTURE_CODE] += 1
@@ -79,7 +88,7 @@ class ColumnClassifer:
                     if is_match_regex(DATETIME_CODE_REGEX, elem):
                         items_counter[ColumnType.DATETIME_CODE] += 1
                 elif is_string(elem):
-                    items_counter[ColumnType.STRING] += 1
+                    items_counter[ColumnType.OTHER_STRING] += 1
 
                     if is_prefecture_name(elem):
                         items_counter[ColumnType.PREFECTURE_NAME] += 1
@@ -88,17 +97,38 @@ class ColumnClassifer:
                         items_counter[ColumnType.JP_CALENDAR_YEAR] += 1
                         continue
 
-                    items_counter[ColumnType.OTHER] += 1
+                    items_counter[ColumnType.NONE_CATEGORY] += 1
 
             # print(f"items_counter: {items_counter}")
 
-            for key, value in items_counter.items():
-                try:
-                    if value / (len(self.df) - empty_counter) > self.classify_rate:
-                        classes[key] = True
-                except ZeroDivisionError:
-                    pass
+            if is_match_category(ColumnType.OTHER_NUMBER):
+                if is_match_category(ColumnType.DATETIME_CODE):
+                    result.append(ColumnType.DATETIME_CODE)
+                    continue
 
-            result.append(classes)
+                if is_match_category(ColumnType.CHRISTIAN_ERA):
+                    if is_match_category(ColumnType.PREFECTURE_CODE):
+                        result.append(ColumnType.PREFECTURE_CODE)
+                        continue
+
+                    result.append(ColumnType.CHRISTIAN_ERA)
+                    continue
+
+                result.append(ColumnType.OTHER_NUMBER)
+                continue
+
+            if is_match_category(ColumnType.OTHER_STRING):
+                if is_match_category(ColumnType.PREFECTURE_NAME):
+                    result.append(ColumnType.PREFECTURE_NAME)
+                    continue
+
+                result.append(ColumnType.OTHER_STRING)
+                continue
+
+            if is_match_category(ColumnType.JP_CALENDAR_YEAR):
+                result.append(ColumnType.JP_CALENDAR_YEAR)
+                continue
+
+            result.append(ColumnType.NONE_CATEGORY)
 
         return result
