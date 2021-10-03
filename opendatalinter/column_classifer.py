@@ -73,7 +73,7 @@ class ColumnClassifer:
         self.df = df
         self.classify_rate = self.DEFAULT_CLASSIFY_RATE if classify_rate is None else classify_rate
 
-    def perform(self):
+    def perform(self, j2w):
         def is_match_category(category):
             try:
                 if items_counter[category] / (
@@ -121,7 +121,7 @@ class ColumnClassifer:
                     if is_prefecture_name(elem):
                         items_counter[ColumnType.PREFECTURE_NAME] += 1
                 else:
-                    if is_jp_calendar_year(jeraconv.J2W(), elem):
+                    if is_jp_calendar_year(j2w, elem):
                         items_counter[ColumnType.JP_CALENDAR_YEAR] += 1
                         continue
 
