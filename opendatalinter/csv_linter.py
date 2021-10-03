@@ -13,6 +13,7 @@ from jeraconv import jeraconv
 from .vo import LintResult, InvalidContent, InvalidCellFactory
 from .funcs import to_csv_format, before_check_1_1
 from .errors import TitleEstimateError, HeaderEstimateError
+from .column_classifer import ColumnClassifer, ColumnType
 
 
 class CSVLinter:
@@ -90,7 +91,7 @@ class CSVLinter:
             self.header_df = pd.read_csv(StringIO(self.header), header=None) \
                 if header_line_num != 0 else pd.DataFrame(np.empty(0))
             self.df = self.gen_df()
-            self.column_classify = self._column_classify()
+            self.column_classify = ColumnClassifer(self.df).perform()
             self.is_num_per_row = self.calc_is_num_per_row()
             print(self.is_num_per_row)
             print(self.title)
@@ -502,115 +503,6 @@ class CSVLinter:
         return LintResult(
             len(invalid_row_cells) + len(invalid_column_cells) == 0,
             invalid_contents)
-
-    def _column_classify(self):
-        """
-        返り値: 列ごとに分類結果を格納した配列
-        """
-
-        classify_array = []
-
-        for i in range(len(self.df.columns)):
-            column = self.df.iloc[:, i]
-
-            klasses = {
-                'prefecture_number': False,
-                'prefecture_name': False,
-                'christian_era': False,
-                'datetime_code': False,
-                'jp_calendar_year': False,
-                'number': False,
-                'string': False,
-                'other': False
-            }
-
-            empty_counter = 0  # 空データに該当するもの
-            items_counter = {
-                'prefecture_number': 0,
-                'prefecture_name': 0,
-                'christian_era': 0,
-                'datetime_code': 0,
-                'jp_calendar_year': 0,
-                'number': 0,
-                'string': 0,
-                'other': 0
-            }
-
-            for elem in column:
-                # print(f"elem: {elem}, type: {type(elem)}")
-                # print(f"is_number? -> {self.__is_number(elem)}")
-                if self.__is_empty(elem):
-                    empty_counter += 1
-
-                elif self.__is_number(elem):
-                    items_counter['number'] += 1
-
-                    if self.__is_prefecture_number(elem):
-                        items_counter['prefecture_number'] += 1
-
-                    if self.__is_match_regex(self.CHRISTIAN_ERA_REGEX, elem):
-                        items_counter['christian_era'] += 1
-
-                    if self.__is_match_regex(self.DATETIME_CODE_REGEX, elem):
-                        items_counter['datetime_code'] += 1
-                elif self.__is_string(elem):
-                    items_counter['string'] += 1
-
-                    if self.__is_prefecture_name(elem):
-                        items_counter['prefecture_name'] += 1
-                else:
-                    if self.__is_jp_calendar_year(jeraconv.J2W(), elem):
-                        items_counter['jp_calendar_year'] += 1
-                        continue
-
-                    items_counter['other'] += 1
-
-            # print(f"items_counter: {items_counter}")
-
-            for key, value in items_counter.items():
-                try:
-                    if value / (len(self.df) - empty_counter) > self.CLASSIFY_RATE:
-                        klasses[key] = True
-                except ZeroDivisionError:
-                    pass
-
-            classify_array.append(klasses)
-
-        return classify_array
-
-    def __is_number(self, elem):
-        return self.__is_num(elem)
-
-    def __is_string(self, elem):
-        if self.__is_empty(elem):
-            return False
-
-        if self.__is_include_number(elem):
-            return False
-
-        return True
-
-    def __is_integer(self, elem):
-        if not self.__is_number(elem):
-            return False
-
-        return float(elem).is_integer()
-
-    def __is_prefecture_number(self, elem):
-        if not self.__is_integer(elem):
-            return False
-
-        return 0 < int(float(elem)) and int(float(elem)) <= 47
-
-    def __is_match_regex(self, regex, elem):
-        result = regex.match(str(elem))
-        if result is None:
-            return False
-
-        return True
-
-    def __is_prefecture_name(self, elem):
-        return elem in (self.VALID_PREFECTURE_NAME + self.INVALID_PREFECTURE_NAME)
 
     def calc_is_num_per_row(self):
         """
