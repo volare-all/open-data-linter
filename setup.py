@@ -5,7 +5,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
     README = readme.read()
 
 setuptools.setup(name="open-data-linter",
-                 version="0.2.0",
+                 version="0.1.1",
                  author="yusk,shiita0903,IidaTakuma",
                  description="Open Data Linter",
                  long_description=README,
