@@ -1,7 +1,7 @@
 import os
 import re
 import traceback
-from typing import List, Pattern
+from typing import List
 
 import chardet
 import numpy as np
@@ -10,7 +10,13 @@ from jeraconv import jeraconv
 
 from .csv_structure_analyzer import CSVStructureAnalyzer
 from .errors import HeaderEstimateError
-from .funcs import before_check_1_1, is_num
+from .funcs import (before_check_1_1,
+                    is_number,
+                    is_empty,
+                    is_include_number,
+                    is_jp_calendar_year,
+                    is_valid_date
+                    )
 from .vo import LintResult, InvalidContent, InvalidCellFactory
 from .column_classifer import ColumnClassifer, ColumnType
 
@@ -108,7 +114,7 @@ class CSVLinter:
             self.cache["1-1"] = LintResult(True, [])
         return self.cache["1-1"]
 
-    @before_check_1_1
+    @ before_check_1_1
     def check_1_2(self):
         """
         １セル１データとなっているか
@@ -150,7 +156,7 @@ class CSVLinter:
 
         return LintResult(not (bool(len(invalid_contents))), invalid_contents)
 
-    @before_check_1_1
+    @ before_check_1_1
     def check_1_3(self):
         """
         数値データは数値属性とし、⽂字列を含まないこと
@@ -164,9 +170,9 @@ class CSVLinter:
             column = self.df.iloc[:, i]
             if self.is_num_per_row[i]:
                 for j, elem in enumerate(column):
-                    if is_num(elem):
+                    if is_number(elem):
                         continue
-                    if self.__is_include_number(elem):
+                    if is_include_number(elem):
                         invalid_cells.append(
                             self.content_invalid_cell_factory.create(j, i))
 
@@ -175,7 +181,7 @@ class CSVLinter:
         return LintResult.gen_single_error_message_result(
             "数値データに文字が含まれています", invalid_cells)
 
-    @before_check_1_1
+    @ before_check_1_1
     def check_1_5(self):
         """
         スペースや改⾏等で体裁を整えていないか。
@@ -197,7 +203,7 @@ class CSVLinter:
         return LintResult.gen_single_error_message_result(
             "スペースや改⾏が含まれています", invalid_cells)
 
-    @before_check_1_1
+    @ before_check_1_1
     def check_1_6(self):
         """
         項⽬名等を省略していないか(ヘッダに欠損データがないか)
@@ -208,7 +214,7 @@ class CSVLinter:
         return LintResult.gen_single_error_message_result(
             "ヘッダーに空欄があります", invalid_cells)
 
-    @before_check_1_1
+    @ before_check_1_1
     def check_1_10(self):
         """
         機種依存⽂字を使⽤していないか。
@@ -240,15 +246,15 @@ class CSVLinter:
         except UnicodeDecodeError:
             return False
 
-    @before_check_1_1
+    @ before_check_1_1
     def check_1_11(self):
         """
         e-Stat の時間軸コードの表記、⻄暦表記⼜は和暦に⻄暦の併記がされているか
         """
         def is_valid_cell(cell: str, year: int) -> bool:
-            is_valid_for_datetime_code = self.__is_valid_date(
+            is_valid_for_datetime_code = is_valid_date(
                 cell, self.DATETIME_CODE_REGEX, year)
-            is_valid_for_christian_era = self.__is_valid_date(
+            is_valid_for_christian_era = is_valid_date(
                 cell, self.CHRISTIAN_ERA_REGEX, year)
             return is_valid_for_datetime_code or is_valid_for_christian_era
 
@@ -276,27 +282,12 @@ class CSVLinter:
 
     def __get_jp_calendar_column_indices(self, j2w: jeraconv.J2W) -> List[int]:
         is_jp_calendar_columns = self.df \
-            .applymap(lambda cell: self.__is_jp_calendar_year(j2w, str(cell))) \
+            .applymap(lambda cell: is_jp_calendar_year(j2w, str(cell))) \
             .all(axis=0)
         return np.squeeze(np.argwhere(is_jp_calendar_columns.values),
                           axis=1).tolist()
 
-    @staticmethod
-    def __is_jp_calendar_year(j2w: jeraconv.J2W, year_str: str) -> bool:
-        try:
-            j2w.convert(year_str)
-            return True
-        except ValueError:
-            return False
-
-    @staticmethod
-    def __is_valid_date(cell: str, regex: Pattern, year: int) -> bool:
-        result = regex.match(cell)
-        if result is None:
-            return False
-        return int(result.groups()[0]) == year
-
-    @before_check_1_1
+    @ before_check_1_1
     def check_1_12(self):
         """
         地域コード⼜は地域名称が表記されているか（都道府県名の表記揺れ）
@@ -371,7 +362,7 @@ class CSVLinter:
                         if left_elem == prefectures_numbers[elem]:
                             continue
                         if type(left_elem) is str:
-                            if is_num(left_elem):
+                            if is_number(left_elem):
                                 float_left_elem = float(left_elem)
                                 if float_left_elem.is_integer() and int(
                                         float_left_elem
@@ -383,7 +374,7 @@ class CSVLinter:
                         if right_elem == prefectures_numbers[elem]:
                             continue
                         if type(right_elem) is str:
-                            if is_num(right_elem):
+                            if is_number(right_elem):
                                 float_right_elem = float(right_elem)
                                 if float_right_elem.is_integer() and int(
                                         float_right_elem
@@ -395,7 +386,7 @@ class CSVLinter:
         return LintResult.gen_single_error_message_result(
             "地域名称が正しく表記されていません．", invalid_cells)
 
-    @before_check_1_1
+    @ before_check_1_1
     def check_1_13(self):
         """
         数値データの同⼀列内に特殊記号（秘匿等）が含まれる場合
@@ -409,9 +400,9 @@ class CSVLinter:
             column = self.df.iloc[:, i]
             if self.is_num_per_row[i]:
                 for j, elem in enumerate(column):
-                    if is_num(elem):
+                    if is_number(elem):
                         continue
-                    if self.__is_empty(elem):
+                    if is_empty(elem):
                         if elem == "***":
                             continue
                         invalid_cells.append(
@@ -420,7 +411,7 @@ class CSVLinter:
         return LintResult.gen_single_error_message_result(
             "空の数値データに適切な記号が入っていません．", invalid_cells)
 
-    @before_check_1_1
+    @ before_check_1_1
     def check_2_1(self):
         """
         データが分断されていないか
@@ -470,15 +461,15 @@ class CSVLinter:
                 # print(f"\t\t{integer_count}")
                 # print(f"\t + {elem}")
 
-                if self.__is_empty(elem):
+                if is_empty(elem):
                     empty_count += 1
                     continue
 
-                if is_num(elem):
+                if is_number(elem):
                     integer_count += 1
                     continue
 
-                if self.__is_include_number(elem):
+                if is_include_number(elem):
                     integer_count += 1
                     continue
 
@@ -499,23 +490,3 @@ class CSVLinter:
         self.encoding = chardet.detect(data)['encoding']
         self.encoding = 'utf-8' if self.encoding is None else self.encoding
         return data.decode(encoding=self.encoding)
-
-    def __is_include_number(self, s):
-        """
-        文字列sに数字が含まれているか
-        """
-        if pd.isnull(s):
-            return False
-
-        return any(map(str.isdigit, s))
-
-    def __is_empty(self, s):
-        """
-        sが空のセル相当であるか
-        TODO: str型以外の場合を検討していない(nullなど)
-        """
-        if pd.isnull(s):
-            return True
-        if type(s) is str and any(
-                [r.match(str(s)) is not None for r in self.EMPTY_REGEX_LIST]):
-            return True

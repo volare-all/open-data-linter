@@ -1,20 +1,8 @@
 import pandas as pd
 from jeraconv import jeraconv
+from typing import Pattern
 
 from .vo import LintResult
-
-
-def is_num(s):
-    """
-    数値に変換可能か判定
-    """
-    if pd.isnull(s):
-        return False
-    try:
-        float(s)
-    except ValueError:
-        return False
-    return True
 
 
 def is_number(elem):
@@ -106,6 +94,13 @@ def is_jp_calendar_year(j2w: jeraconv.J2W, year_str: str) -> bool:
         return True
     except ValueError:
         return False
+
+
+def is_valid_date(cell: str, regex: Pattern, year: int) -> bool:
+    result = regex.match(cell)
+    if result is None:
+        return False
+    return int(result.groups()[0]) == year
 
 
 def before_check_1_1(func):
