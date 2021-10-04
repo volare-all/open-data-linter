@@ -2,6 +2,7 @@ import unittest
 
 from opendatalinter import CSVLinter, ExcelLinter
 from opendatalinter.vo import LintResult
+from opendatalinter.column_classifer import ColumnType
 
 
 def gen_csv_linter(file_path: str) -> CSVLinter:
@@ -131,93 +132,35 @@ class TestCsvLinter(unittest.TestCase):
         self.assertEqual(0, len(result.invalid_contents))
 
     def test_column_classify(self):
+
         linter = gen_csv_linter("samples/classify_sample.csv")
-        classify_array = linter._column_classify()
-        self.assertEqual(classify_array[0], {
-            'prefecture_number': True,
-            'prefecture_name': False,
-            'christian_era': True,
-            'datetime_code': False,
-            'jp_calendar_year': False,
-            'number': True,
-            'string': False,
-            'other': False})
-
-        self.assertEqual(classify_array[2], {
-            'prefecture_number': False,
-            'prefecture_name': True,
-            'christian_era': False,
-            'datetime_code': False,
-            'jp_calendar_year': False,
-            'number': False,
-            'string': True,
-            'other': False})
-
-        self.assertEqual(classify_array[4], {
-            'prefecture_number': False,
-            'prefecture_name': False,
-            'christian_era': True,
-            'datetime_code': False,
-            'jp_calendar_year': False,
-            'number': True,
-            'string': False,
-            'other': False})
-
-        self.assertEqual(classify_array[6], {
-            'prefecture_number': False,
-            'prefecture_name': False,
-            'christian_era': False,
-            'datetime_code': True,
-            'jp_calendar_year': False,
-            'number': True,
-            'string': False,
-            'other': False})
-
-        self.assertEqual(classify_array[8], {
-            'prefecture_number': False,
-            'prefecture_name': False,
-            'christian_era': False,
-            'datetime_code': False,
-            'jp_calendar_year': True,
-            'number': False,
-            'string': False,
-            'other': False})
-
-        self.assertEqual(classify_array[10], {
-            'prefecture_number': False,
-            'prefecture_name': False,
-            'christian_era': False,
-            'datetime_code': False,
-            'jp_calendar_year': False,
-            'number': True,
-            'string': False,
-            'other': False})
-
-        self.assertEqual(classify_array[12], {
-            'prefecture_number': False,
-            'prefecture_name': False,
-            'christian_era': False,
-            'datetime_code': False,
-            'jp_calendar_year': False,
-            'number': False,
-            'string': True,
-            'other': False})
-
-        self.assertEqual(classify_array[14], {
-            'prefecture_number': False,
-            'prefecture_name': False,
-            'christian_era': False,
-            'datetime_code': False,
-            'jp_calendar_year': False,
-            'number': False,
-            'string': False,
-            'other': True})
+        classify_array = linter.column_classify
+        self.assertEqual(classify_array[0], ColumnType.PREFECTURE_CODE)
+        self.assertEqual(classify_array[2], ColumnType.PREFECTURE_NAME)
+        self.assertEqual(classify_array[4], ColumnType.CHRISTIAN_ERA)
+        self.assertEqual(classify_array[6], ColumnType.DATETIME_CODE)
+        self.assertEqual(classify_array[8], ColumnType.JP_CALENDAR_YEAR)
+        self.assertEqual(classify_array[10], ColumnType.OTHER_NUMBER)
+        self.assertEqual(classify_array[12], ColumnType.OTHER_STRING)
+        self.assertEqual(classify_array[14], ColumnType.NONE_CATEGORY)
 
 
 class TestExcelLinter(unittest.TestCase):
     def test_check_1_1(self):
         linter = gen_excel_linter("./samples/since2003_visitor_arrivals.xlsx")
         self.assertTrue(linter.check_1_1().is_valid)
+
+    def test_check_1_4(self):
+        linter = gen_excel_linter("./samples/since2003_visitor_arrivals.xlsx")
+        result = linter.check_1_4()
+        self.assertFalse(result.is_valid)
+        expected = []
+        for i in range(3, 18):
+            expected.append((i, 0))
+        for i in range(21, 57):
+            expected.append((i, 0))
+        self.assertSetEqual(set(expected),
+                            set(result.invalid_contents[0].invalid_cells))
 
     def test_check_1_7(self):
         linter = gen_excel_linter("samples/expression.xlsx")

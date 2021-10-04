@@ -1,58 +1,36 @@
-import csv
 import os
 import re
-from io import StringIO
-from typing import List, Pattern
 import traceback
+from typing import List
 
 import chardet
 import numpy as np
-import pandas as pd
 from jeraconv import jeraconv
 
+from .csv_structure_analyzer import CSVStructureAnalyzer
+from .errors import HeaderEstimateError
+from .funcs import (
+    before_check_1_1,
+    is_number,
+    is_empty,
+    is_include_number,
+    is_jp_calendar_year,
+    is_valid_date,
+)
+from .regex import (
+    SPACES_AND_LINE_BREAK_REGEX,
+    DATETIME_CODE_REGEX,
+    CHRISTIAN_ERA_REGEX,
+    NUM_WITH_BRACKETS_REGEX,
+    NUM_WITH_NUM_REGEX,
+)
 from .vo import LintResult, InvalidContent, InvalidCellFactory
-from .funcs import to_csv_format, before_check_1_1
-from .errors import TitleEstimateError, HeaderEstimateError
+from .column_classifer import ColumnClassifer, ColumnType
 
 
 class CSVLinter:
     INTEGER_RATE = 0.8  # 列を数値列か判定する基準(数値が含まれているセル数 / 列の長さ)
-    CLASSIFY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ + 空のセル))
-    # セルの文字列のうち, 空として扱うもの
-    EMPTY_REGEX_LIST = list(
-        map(lambda s: re.compile(s), [r'^\s*$', '-', 'ー', 'なし']))
-
-    SPACES_AND_LINE_BREAK_REGEX = re.compile(r'.*[\s\n].*')
-    DATETIME_CODE_REGEX = re.compile(r"^(\d{4})[01][012]\d{4}$")
-    CHRISTIAN_ERA_REGEX = re.compile(r"^(\d{1,4})年?$")
-    NUM_WITH_BRACKETS_REGEX = re.compile(r"^(\d+?)(\s*?)[\(（)](.+?)[\)）]")
-    NUM_WITH_NUM_REGEX = re.compile(r"^(\d+?)((\s+?)(\d+?))+?")
-
-    VALID_PREFECTURE_NAME = [
-        '北海道', '青森県', '岩手県', '宮城県', '秋田県',
-        '山形県', '福島県', '茨城県', '栃木県', '群馬県',
-        '埼玉県', '千葉県', '東京都', '神奈川県', '新潟県',
-        '富山県', '石川県', '福井県', '山梨県', '長野県',
-        '岐阜県', '静岡県', '愛知県', '三重県', '滋賀県',
-        '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県',
-        '鳥取県', '島根県', '岡山県', '広島県', '山口県',
-        '徳島県', '香川県', '愛媛県', '高知県', '福岡県',
-        '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県',
-        '鹿児島県', '沖縄県'
-    ]
-
-    INVALID_PREFECTURE_NAME = [
-        '青森', '岩手', '宮城', '秋田',
-        '山形', '福島', '茨城', '栃木', '群馬',
-        '埼玉', '千葉', '東京', '神奈川', '新潟',
-        '富山', '石川', '福井', '山梨', '長野',
-        '岐阜', '静岡', '愛知', '三重', '滋賀',
-        '京都', '大阪', '兵庫', '奈良', '和歌山',
-        '鳥取', '島根', '岡山', '広島', '山口',
-        '徳島', '香川', '愛媛', '高知', '福岡',
-        '佐賀', '長崎', '熊本', '大分', '宮崎',
-        '鹿児島', '沖縄'
-    ]
+    CLASSIFY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ - 空のセル))
 
     def __init__(self,
                  data: bytes,
@@ -64,38 +42,28 @@ class CSVLinter:
         exp = os.path.splitext(filename)[1]
         if exp not in [".csv", ".CSV"]:
             self.cache["1-1"] = LintResult.gen_simple_error_result(
-                "csv形式のファイルを用意してください。")
+                "ファイルが読み込めませんでした。ファイル形式が Excel か CSV となっているか確認してください。")
             return
 
         try:
             self.data = data
             self.filename = filename
             self.text = self.__decode(data)
-            self.lines = [
-                to_csv_format(line) for line in csv.reader(StringIO(self.text))
-            ]
-            if title_line_num is None:
-                title_line_num = self.estimate_title_line_num()
-            self.title_line_num = title_line_num
-            if header_line_num is None:
-                header_line_num = self.estimate_header_line_num()
-            self.header_line_num = header_line_num
+
+            csv_structure_analyzer = CSVStructureAnalyzer(self.text)
+            self.title_line_num = csv_structure_analyzer.title_line_num if title_line_num is None else title_line_num
+            self.header_line_num = csv_structure_analyzer.header_line_num if header_line_num is None else header_line_num
             self.header_invalid_cell_factory = InvalidCellFactory(
                 self.title_line_num)
             self.content_invalid_cell_factory = InvalidCellFactory(
                 self.title_line_num + self.header_line_num)
 
-            self.title = self.gen_title()
-            self.header = self.gen_header()
-            self.header_df = pd.read_csv(StringIO(self.header), header=None) \
-                if header_line_num != 0 else pd.DataFrame(np.empty(0))
-            self.df = self.gen_df()
-            self.column_classify = self._column_classify()
+            self.header_df = csv_structure_analyzer.gen_header_df()
+            self.df = csv_structure_analyzer.gen_rows_df()
+            self.column_classify = ColumnClassifer(
+                self.df, self.CLASSIFY_RATE).perform(jeraconv.J2W())
             self.is_num_per_row = self.calc_is_num_per_row()
             print(self.is_num_per_row)
-            print(self.title)
-            print(self.header_df)
-            print(self.df)
         except UnicodeDecodeError:
             if self.encoding == "utf-8":
                 self.cache["1-1"] = LintResult.gen_simple_error_result(
@@ -103,9 +71,6 @@ class CSVLinter:
             else:
                 self.cache["1-1"] = LintResult.gen_simple_error_result(
                     "文字コードが読み取れませんでした。文字コードがutf-8になっているか確認してください。")
-        except TitleEstimateError:
-            self.cache["1-1"] = LintResult.gen_simple_error_result(
-                "CSVファイルとして読み込めませんでした。CSVの形式として正しいかどうか確認してください。")
         except HeaderEstimateError:
             self.cache["1-1"] = LintResult.gen_simple_error_result(
                 "ヘッダー部分の推定に失敗しました。")
@@ -113,41 +78,6 @@ class CSVLinter:
             traceback.print_exc()
             self.cache["1-1"] = LintResult.gen_simple_error_result(
                 "未知のエラーが発生しました。お手数ですがサーバー運営者にお問い合わせください。")
-
-    def estimate_title_line_num(self):
-        for i in range(len(self.lines)):
-            try:
-                s = StringIO("\n".join(self.lines[i:]))
-                pd.read_csv(s, header=None)
-                return i
-            except Exception:
-                pass
-        raise TitleEstimateError()
-
-    def estimate_header_line_num(self):
-        df = pd.read_csv(StringIO("\n".join(self.lines[self.title_line_num:])),
-                         header=None)
-        for i in range(len(df)):
-            row = df.iloc[i, :]
-            cnt = 0
-            for v in row:
-                if self.__is_num(v):
-                    cnt += 1
-            if cnt > 0:
-                return i
-        raise HeaderEstimateError()
-
-    def gen_title(self):
-        return "\n".join(self.lines[:self.title_line_num])
-
-    def gen_header(self):
-        return "\n".join(self.lines[self.title_line_num:self.title_line_num +
-                                    self.header_line_num])
-
-    def gen_df(self):
-        s = StringIO("\n".join(self.lines[self.title_line_num +
-                                          self.header_line_num:]))
-        return pd.read_csv(s, header=None)  # content のみが返る
 
     def check_1_1(self):
         """
@@ -172,17 +102,14 @@ class CSVLinter:
                 elms = re.split("[、,]", v)
                 if len(elms) > 1:
                     for elm in elms:
-                        m = self.NUM_WITH_BRACKETS_REGEX.match(
+                        m = NUM_WITH_BRACKETS_REGEX.match(
                             elm.strip())  # todo: もっと広いケースで通るように
                         if m is not None:
                             comma_separated_invalid_cells.append(
                                 self.content_invalid_cell_factory.create(i, j))
                             break
                 else:
-                    for r in [
-                            self.NUM_WITH_BRACKETS_REGEX,
-                            self.NUM_WITH_NUM_REGEX
-                    ]:
+                    for r in [NUM_WITH_BRACKETS_REGEX, NUM_WITH_NUM_REGEX]:
                         m = r.match(v.strip())
                         if m is not None:
                             num_with_brackets_invalid_cells.append(
@@ -213,9 +140,9 @@ class CSVLinter:
             column = self.df.iloc[:, i]
             if self.is_num_per_row[i]:
                 for j, elem in enumerate(column):
-                    if self.__is_num(elem):
+                    if is_number(elem):
                         continue
-                    if self.__is_include_number(elem):
+                    if is_include_number(elem):
                         invalid_cells.append(
                             self.content_invalid_cell_factory.create(j, i))
 
@@ -235,9 +162,8 @@ class CSVLinter:
             (self.header_df, self.header_invalid_cell_factory),
             (self.df, self.content_invalid_cell_factory)
         ]:
-            is_formatted = df.applymap(
-                lambda cell: self.SPACES_AND_LINE_BREAK_REGEX.match(str(
-                    cell)) is not None)
+            is_formatted = df.applymap(lambda cell: SPACES_AND_LINE_BREAK_REGEX
+                                       .match(str(cell)) is not None)
             indices = list(np.argwhere(is_formatted.values))
             invalid_cells.extend(
                 map(lambda i: invalid_cell_factory.create(i[0], i[1]),
@@ -295,10 +221,12 @@ class CSVLinter:
         e-Stat の時間軸コードの表記、⻄暦表記⼜は和暦に⻄暦の併記がされているか
         """
         def is_valid_cell(cell: str, year: int) -> bool:
-            is_valid_for_datetime_code = self.__is_valid_date(
-                cell, self.DATETIME_CODE_REGEX, year)
-            is_valid_for_christian_era = self.__is_valid_date(
-                cell, self.CHRISTIAN_ERA_REGEX, year)
+            is_valid_for_datetime_code = is_valid_date(cell,
+                                                       DATETIME_CODE_REGEX,
+                                                       year)
+            is_valid_for_christian_era = is_valid_date(cell,
+                                                       CHRISTIAN_ERA_REGEX,
+                                                       year)
             return is_valid_for_datetime_code or is_valid_for_christian_era
 
         j2w = jeraconv.J2W()
@@ -325,25 +253,10 @@ class CSVLinter:
 
     def __get_jp_calendar_column_indices(self, j2w: jeraconv.J2W) -> List[int]:
         is_jp_calendar_columns = self.df \
-            .applymap(lambda cell: self.__is_jp_calendar_year(j2w, str(cell))) \
+            .applymap(lambda cell: is_jp_calendar_year(j2w, str(cell))) \
             .all(axis=0)
         return np.squeeze(np.argwhere(is_jp_calendar_columns.values),
                           axis=1).tolist()
-
-    @staticmethod
-    def __is_jp_calendar_year(j2w: jeraconv.J2W, year_str: str) -> bool:
-        try:
-            j2w.convert(year_str)
-            return True
-        except ValueError:
-            return False
-
-    @staticmethod
-    def __is_valid_date(cell: str, regex: Pattern, year: int) -> bool:
-        result = regex.match(cell)
-        if result is None:
-            return False
-        return int(result.groups()[0]) == year
 
     @before_check_1_1
     def check_1_12(self):
@@ -519,9 +432,9 @@ class CSVLinter:
             column = self.df.iloc[:, i]
             if self.is_num_per_row[i]:
                 for j, elem in enumerate(column):
-                    if self.__is_num(elem):
+                    if is_number(elem):
                         continue
-                    if self.__is_empty(elem):
+                    if is_empty(elem):
                         if elem == "***":
                             continue
                         invalid_cells.append(
@@ -564,115 +477,6 @@ class CSVLinter:
             len(invalid_row_cells) + len(invalid_column_cells) == 0,
             invalid_contents)
 
-    def _column_classify(self):
-        """
-        返り値: 列ごとに分類結果を格納した配列
-        """
-
-        classify_array = []
-
-        for i in range(len(self.df.columns)):
-            column = self.df.iloc[:, i]
-
-            klasses = {
-                'prefecture_number': False,
-                'prefecture_name': False,
-                'christian_era': False,
-                'datetime_code': False,
-                'jp_calendar_year': False,
-                'number': False,
-                'string': False,
-                'other': False
-            }
-
-            empty_counter = 0  # 空データに該当するもの
-            items_counter = {
-                'prefecture_number': 0,
-                'prefecture_name': 0,
-                'christian_era': 0,
-                'datetime_code': 0,
-                'jp_calendar_year': 0,
-                'number': 0,
-                'string': 0,
-                'other': 0
-            }
-
-            for elem in column:
-                # print(f"elem: {elem}, type: {type(elem)}")
-                # print(f"is_number? -> {self.__is_number(elem)}")
-                if self.__is_empty(elem):
-                    empty_counter += 1
-
-                elif self.__is_number(elem):
-                    items_counter['number'] += 1
-
-                    if self.__is_prefecture_number(elem):
-                        items_counter['prefecture_number'] += 1
-
-                    if self.__is_match_regex(self.CHRISTIAN_ERA_REGEX, elem):
-                        items_counter['christian_era'] += 1
-
-                    if self.__is_match_regex(self.DATETIME_CODE_REGEX, elem):
-                        items_counter['datetime_code'] += 1
-                elif self.__is_string(elem):
-                    items_counter['string'] += 1
-
-                    if self.__is_prefecture_name(elem):
-                        items_counter['prefecture_name'] += 1
-                else:
-                    if self.__is_jp_calendar_year(jeraconv.J2W(), elem):
-                        items_counter['jp_calendar_year'] += 1
-                        continue
-
-                    items_counter['other'] += 1
-
-            # print(f"items_counter: {items_counter}")
-
-            for key, value in items_counter.items():
-                try:
-                    if value / (len(self.df) - empty_counter) > self.CLASSIFY_RATE:
-                        klasses[key] = True
-                except ZeroDivisionError:
-                    pass
-
-            classify_array.append(klasses)
-
-        return classify_array
-
-    def __is_number(self, elem):
-        return self.__is_num(elem)
-
-    def __is_string(self, elem):
-        if self.__is_empty(elem):
-            return False
-
-        if self.__is_include_number(elem):
-            return False
-
-        return True
-
-    def __is_integer(self, elem):
-        if not self.__is_number(elem):
-            return False
-
-        return float(elem).is_integer()
-
-    def __is_prefecture_number(self, elem):
-        if not self.__is_integer(elem):
-            return False
-
-        return 0 < int(float(elem)) and int(float(elem)) <= 47
-
-    def __is_match_regex(self, regex, elem):
-        result = regex.match(str(elem))
-        if result is None:
-            return False
-
-        return True
-
-    def __is_prefecture_name(self, elem):
-        return elem in (self.VALID_PREFECTURE_NAME + self.INVALID_PREFECTURE_NAME)
-
     def calc_is_num_per_row(self):
         """
         返り値: [配列]列ごとの数値列であるかの真偽値
@@ -689,15 +493,15 @@ class CSVLinter:
                 # print(f"\t\t{integer_count}")
                 # print(f"\t + {elem}")
 
-                if self.__is_empty(elem):
+                if is_empty(elem):
                     empty_count += 1
                     continue
 
-                if self.__is_num(elem):
+                if is_number(elem):
                     integer_count += 1
                     continue
 
-                if self.__is_include_number(elem):
+                if is_include_number(elem):
                     integer_count += 1
                     continue
 
@@ -718,35 +522,3 @@ class CSVLinter:
         self.encoding = chardet.detect(data)['encoding']
         self.encoding = 'utf-8' if self.encoding is None else self.encoding
         return data.decode(encoding=self.encoding)
-
-    def __is_num(self, s):
-        """
-        数値に変換可能か判定
-        """
-        if pd.isnull(s):
-            return False
-        try:
-            float(s)
-        except ValueError:
-            return False
-        return True
-
-    def __is_include_number(self, s):
-        """
-        文字列sに数字が含まれているか
-        """
-        if pd.isnull(s):
-            return False
-
-        return any(map(str.isdigit, s))
-
-    def __is_empty(self, s):
-        """
-        sが空のセル相当であるか
-        TODO: str型以外の場合を検討していない(nullなど)
-        """
-        if pd.isnull(s):
-            return True
-        if type(s) is str and any(
-                [r.match(str(s)) is not None for r in self.EMPTY_REGEX_LIST]):
-            return True
