@@ -27,7 +27,7 @@ from .regex import (
     INVALID_PREFECTURE_NAME,
 )
 from .vo import LintResult, InvalidContent, InvalidCellFactory
-from .column_classifer import ColumnClassifer, ColumnType
+from .column_classifier import ColumnClassifier, ColumnType
 
 
 class CSVLinter:
@@ -62,7 +62,7 @@ class CSVLinter:
 
             self.header_df = csv_structure_analyzer.gen_header_df()
             self.df = csv_structure_analyzer.gen_rows_df()
-            self.column_classify = ColumnClassifer(
+            self.column_classify = ColumnClassifier(
                 self.df, self.CLASSIFY_RATE).perform()
             self.is_num_per_row = self.calc_is_num_per_row()
             print(self.is_num_per_row)

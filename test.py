@@ -2,7 +2,7 @@ import unittest
 
 from opendatalinter import CSVLinter, ExcelLinter
 from opendatalinter.vo import LintResult
-from opendatalinter.column_classifer import ColumnType
+from opendatalinter.column_classifier import ColumnType
 
 
 def gen_csv_linter(file_path: str) -> CSVLinter:

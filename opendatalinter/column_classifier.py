@@ -38,7 +38,7 @@ class ColumnType(Enum):
         return False
 
 
-class ColumnClassifer:
+class ColumnClassifier:
     DEFAULT_CLASSIFY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ - 空のセル))
 
     def __init__(self, df, classify_rate=None):
