@@ -1,4 +1,7 @@
 from enum import Enum
+from typing import Dict, Tuple
+
+from jeraconv import jeraconv
 
 from .funcs import (is_number, is_string, is_prefecture_code,
                     is_prefecture_name, is_match_regex, is_empty,
@@ -42,95 +45,78 @@ class ColumnClassifer:
         self.df = df
         self.classify_rate = self.DEFAULT_CLASSIFY_RATE if classify_rate is None else classify_rate
 
-    def perform(self, j2w):
-        def is_match_category(category, items_counter, empty_counter):
-            try:
-                if items_counter[category] / (
-                        len(self.df) - empty_counter) > self.classify_rate:
-                    return True
-            except:
-                pass
-            return False
+    def perform(self):
+        return [
+            self.__get_column_type(ci) for ci in range(len(self.df.columns))
+        ]
 
-        result = []
+    def __get_column_type(self, column_index: int) -> ColumnType:
+        counts, empty_count = self.__count_elements_and_empty(column_index)
+        return self.__get_plausible_column_type(counts, empty_count)
 
-        for i in range(len(self.df.columns)):
-            column = self.df.iloc[:, i]
+    def __count_elements_and_empty(
+            self, column_index: int) -> Tuple[Dict[ColumnType, int], int]:
+        empty_count = 0
+        counts = {
+            ColumnType.PREFECTURE_CODE: 0,
+            ColumnType.CHRISTIAN_ERA: 0,
+            ColumnType.DATETIME_CODE: 0,
+            ColumnType.OTHER_NUMBER: 0,
+            ColumnType.PREFECTURE_NAME: 0,
+            ColumnType.OTHER_STRING: 0,
+            ColumnType.JP_CALENDAR_YEAR: 0,
+            ColumnType.NONE_CATEGORY: 0
+        }
+        column = self.df.iloc[:, column_index]
 
-            empty_counter = 0  # 空データに該当するもの
-            items_counter = {
-                ColumnType.PREFECTURE_CODE: 0,
-                ColumnType.PREFECTURE_NAME: 0,
-                ColumnType.CHRISTIAN_ERA: 0,
-                ColumnType.DATETIME_CODE: 0,
-                ColumnType.JP_CALENDAR_YEAR: 0,
-                ColumnType.OTHER_NUMBER: 0,
-                ColumnType.OTHER_STRING: 0,
-                ColumnType.NONE_CATEGORY: 0
-            }
+        j2w = jeraconv.J2W()
+        for elem in column:
+            if is_empty(elem):
+                empty_count += 1
+            elif is_prefecture_code(elem):
+                counts[ColumnType.PREFECTURE_CODE] += 1
+                counts[ColumnType.CHRISTIAN_ERA] += 1
+                counts[ColumnType.OTHER_NUMBER] += 1
+            elif is_match_regex(CHRISTIAN_ERA_REGEX, elem):
+                counts[ColumnType.CHRISTIAN_ERA] += 1
+                counts[ColumnType.OTHER_NUMBER] += 1
+            elif is_match_regex(DATETIME_CODE_REGEX, elem):
+                counts[ColumnType.DATETIME_CODE] += 1
+                counts[ColumnType.OTHER_NUMBER] += 1
+            elif is_number(elem):
+                counts[ColumnType.OTHER_NUMBER] += 1
+            elif is_prefecture_name(elem):
+                counts[ColumnType.PREFECTURE_NAME] += 1
+                counts[ColumnType.OTHER_STRING] += 1
+            elif is_string(elem):
+                counts[ColumnType.OTHER_STRING] += 1
+            elif is_jp_calendar_year(j2w, elem):
+                counts[ColumnType.JP_CALENDAR_YEAR] += 1
+            else:
+                counts[ColumnType.NONE_CATEGORY] += 1
 
-            for elem in column:
-                if is_empty(elem):
-                    empty_counter += 1
+        return counts, empty_count
 
-                elif is_number(elem):
-                    items_counter[ColumnType.OTHER_NUMBER] += 1
+    def __get_plausible_column_type(self, counts: Dict[ColumnType, int],
+                                    empty_count: int) -> ColumnType:
+        if len(self.df) == empty_count:
+            return ColumnType.NONE_CATEGORY
 
-                    if is_prefecture_code(elem):
-                        items_counter[ColumnType.PREFECTURE_CODE] += 1
+        priority = [
+            ColumnType.PREFECTURE_CODE, ColumnType.CHRISTIAN_ERA,
+            ColumnType.DATETIME_CODE, ColumnType.OTHER_NUMBER,
+            ColumnType.PREFECTURE_NAME, ColumnType.OTHER_STRING,
+            ColumnType.JP_CALENDAR_YEAR, ColumnType.NONE_CATEGORY
+        ]
 
-                    if is_match_regex(CHRISTIAN_ERA_REGEX, elem):
-                        items_counter[ColumnType.CHRISTIAN_ERA] += 1
+        plausible_type = None
+        max_count = 0
+        for t in priority:
+            if counts[t] > max_count:
+                plausible_type = t
+                max_count = counts[t]
 
-                    if is_match_regex(DATETIME_CODE_REGEX, elem):
-                        items_counter[ColumnType.DATETIME_CODE] += 1
-                elif is_string(elem):
-                    items_counter[ColumnType.OTHER_STRING] += 1
-
-                    if is_prefecture_name(elem):
-                        items_counter[ColumnType.PREFECTURE_NAME] += 1
-                else:
-                    if is_jp_calendar_year(j2w, elem):
-                        items_counter[ColumnType.JP_CALENDAR_YEAR] += 1
-                        continue
-
-                    items_counter[ColumnType.NONE_CATEGORY] += 1
-
-            if is_match_category(ColumnType.OTHER_NUMBER, items_counter,
-                                 empty_counter):
-                if is_match_category(ColumnType.DATETIME_CODE, items_counter,
-                                     empty_counter):
-                    result.append(ColumnType.DATETIME_CODE)
-                    continue
-
-                if is_match_category(ColumnType.CHRISTIAN_ERA, items_counter,
-                                     empty_counter):
-                    if is_match_category(ColumnType.PREFECTURE_CODE,
-                                         items_counter, empty_counter):
-                        result.append(ColumnType.PREFECTURE_CODE)
-                        continue
-
-                    result.append(ColumnType.CHRISTIAN_ERA)
-                    continue
-
-                result.append(ColumnType.OTHER_NUMBER)
-                continue
-
-            if is_match_category(ColumnType.OTHER_STRING, items_counter,
-                                 empty_counter):
-                if is_match_category(ColumnType.PREFECTURE_NAME, items_counter,
-                                     empty_counter):
-                    result.append(ColumnType.PREFECTURE_NAME)
-                    continue
-
-                result.append(ColumnType.OTHER_STRING)
-                continue
-
-            if is_match_category(ColumnType.JP_CALENDAR_YEAR, items_counter,
-                                 empty_counter):
-                result.append(ColumnType.JP_CALENDAR_YEAR)
-                continue
-
-            result.append(ColumnType.NONE_CATEGORY)
-
-        return result
+        if max_count / (len(self.df) - empty_count) > self.classify_rate:
+            return plausible_type
+        else:
+            return ColumnType.NONE_CATEGORY
