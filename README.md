@@ -9,5 +9,6 @@ poetry install
 ## test
 
 ```
-poetry run python test.py
+cd tests
+poetry run pytest
 ```

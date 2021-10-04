@@ -1,6 +1,6 @@
 import unittest
 
-from opendatalinter import CSVLinter, ExcelLinter
+from opendatalinter import CSVLinter
 from opendatalinter.vo import LintResult
 from opendatalinter.column_classifer import ColumnType
 
@@ -8,11 +8,6 @@ from opendatalinter.column_classifer import ColumnType
 def gen_csv_linter(file_path: str) -> CSVLinter:
     with open(file_path, "rb") as f:
         return CSVLinter(f.read(), file_path)
-
-
-def gen_excel_linter(file_path: str) -> ExcelLinter:
-    with open(file_path, "rb") as f:
-        return ExcelLinter(f.read(), file_path)
 
 
 class TestCsvLinter(unittest.TestCase):
@@ -141,30 +136,6 @@ class TestCsvLinter(unittest.TestCase):
         self.assertEqual(classify_array[10], ColumnType.OTHER_NUMBER)
         self.assertEqual(classify_array[12], ColumnType.OTHER_STRING)
         self.assertEqual(classify_array[14], ColumnType.NONE_CATEGORY)
-
-
-class TestExcelLinter(unittest.TestCase):
-    def test_check_1_1(self):
-        linter = gen_excel_linter("tests/samples/since2003_visitor_arrivals.xlsx")
-        self.assertTrue(linter.check_1_1().is_valid)
-
-    def test_check_1_4(self):
-        linter = gen_excel_linter("tests/samples/since2003_visitor_arrivals.xlsx")
-        result = linter.check_1_4()
-        self.assertFalse(result.is_valid)
-        expected = []
-        for i in range(3, 18):
-            expected.append((i, 0))
-        for i in range(21, 57):
-            expected.append((i, 0))
-        self.assertSetEqual(set(expected),
-                            set(result.invalid_contents[0].invalid_cells))
-
-    def test_check_1_7(self):
-        linter = gen_excel_linter("tests/samples/expression.xlsx")
-        result = linter.check_1_7()
-        self.assertEqual({(1, 2), (2, 0), (2, 2)},
-                         set(result.invalid_contents[0].invalid_cells))
 
 
 if __name__ == '__main__':
