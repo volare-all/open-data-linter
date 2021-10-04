@@ -327,13 +327,13 @@ class CSVLinter:
             return True
 
         # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，隣接する列に完全一致する都道府県コードがある場合True
-        def is_valid_prefecture_with_prefecture_number(name_c_index,
-                                                       number_c_index):
+        def is_valid_prefecture_with_prefecture_code(name_c_index,
+                                                     number_c_index):
             prefecture_name_column = self.df.iloc[:, name_c_index]
-            prefecture_number_column = self.df.iloc[:, number_c_index]
+            prefecture_code_column = self.df.iloc[:, number_c_index]
 
             for name, number in zip(prefecture_name_column,
-                                    prefecture_number_column):
+                                    prefecture_code_column):
                 if is_empty(name):
                     continue
 
@@ -387,13 +387,13 @@ class CSVLinter:
             # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，左に隣接する列に完全一致する都道府県コードがある場合valid
             if j > 0 and self.column_classify[j -
                                               1] == ColumnType.PREFECTURE_CODE:
-                if is_valid_prefecture_with_prefecture_number(j, j - 1):
+                if is_valid_prefecture_with_prefecture_code(j, j - 1):
                     continue
 
             # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，右に隣接する列に完全一致する都道府県コードがある場合valid
             if j + 1 < len(self.df.columns) and self.column_classify[
                     j + 1] == ColumnType.PREFECTURE_CODE:
-                if is_valid_prefecture_with_prefecture_number(j, j + 1):
+                if is_valid_prefecture_with_prefecture_code(j, j + 1):
                     continue
 
             # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県名が省略されている．かつ，完全一致する都道府県番号が存在しない場合列単位でinvalid
