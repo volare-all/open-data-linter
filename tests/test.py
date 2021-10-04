@@ -124,19 +124,6 @@ class TestCsvLinter(unittest.TestCase):
         self.assertTrue(result.is_valid)
         self.assertEqual(0, len(result.invalid_contents))
 
-    def test_column_classify(self):
-
-        linter = gen_csv_linter("tests/samples/classify_sample.csv")
-        classify_array = linter.column_classify
-        self.assertEqual(classify_array[0], ColumnType.PREFECTURE_CODE)
-        self.assertEqual(classify_array[2], ColumnType.PREFECTURE_NAME)
-        self.assertEqual(classify_array[4], ColumnType.CHRISTIAN_ERA)
-        self.assertEqual(classify_array[6], ColumnType.DATETIME_CODE)
-        self.assertEqual(classify_array[8], ColumnType.JP_CALENDAR_YEAR)
-        self.assertEqual(classify_array[10], ColumnType.OTHER_NUMBER)
-        self.assertEqual(classify_array[12], ColumnType.OTHER_STRING)
-        self.assertEqual(classify_array[14], ColumnType.NONE_CATEGORY)
-
 
 if __name__ == '__main__':
     unittest.main()
