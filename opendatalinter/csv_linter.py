@@ -138,15 +138,15 @@ class CSVLinter:
         # これに単位（文字列）があるとerrorに追加
         invalid_cells = []
 
-        for i in range(len(self.df.columns)):
-            column = self.df.iloc[:, i]
-            if self.is_num_per_row[i]:
-                for j, elem in enumerate(column):
+        for j in range(len(self.df.columns)):
+            column = self.df.iloc[:, j]
+            if self.is_num_per_row[j]:
+                for i, elem in enumerate(column):
                     if is_number(elem):
                         continue
                     if is_include_number(elem):
                         invalid_cells.append(
-                            self.content_invalid_cell_factory.create(j, i))
+                            self.content_invalid_cell_factory.create(i, j))
 
         print(invalid_cells)
 
