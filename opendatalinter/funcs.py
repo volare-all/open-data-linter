@@ -71,6 +71,12 @@ def is_match_regex(regex, elem):
     return True
 
 
+def is_fullmatch_regex(regex, elem):
+    if regex.fullmatch(str(elem)):
+        return True
+    return False
+
+
 def is_empty(elem):
     """
     sが空のセル相当であるか
