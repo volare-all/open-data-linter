@@ -133,25 +133,22 @@ class CSVLinter:
         """
         数値データは数値属性とし、⽂字列を含まないこと
         """
-        # 列ごとにループを回す
-        # セル内に数値が含まれていたら「数値」とみなす
-        # これに単位（文字列）があるとerrorに追加
         invalid_cells = []
 
         for j in range(len(self.df.columns)):
-            column = self.df.iloc[:, j]
-            if self.is_num_per_row[j]:
-                for i, elem in enumerate(column):
-                    if is_number(elem):
-                        continue
-                    if is_include_number(elem):
-                        invalid_cells.append(
-                            self.content_invalid_cell_factory.create(i, j))
+            if not ColumnType.is_number(self.column_classify[j]):
+                continue
 
-        print(invalid_cells)
+            column = self.df.iloc[:, j]
+            for i, elem in enumerate(column):
+                if is_number(elem):
+                    continue
+                if is_include_number(elem):
+                    invalid_cells.append(
+                        self.content_invalid_cell_factory.create(i, j))
 
         return LintResult.gen_single_error_message_result(
-            "数値データに文字が含まれています", invalid_cells)
+            "数値データの列に文字が含まれています", invalid_cells)
 
     @before_check_1_1
     def check_1_5(self):
