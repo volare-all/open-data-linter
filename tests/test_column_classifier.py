@@ -1,8 +1,7 @@
 import pandas as pd
 import pytest
-from jeraconv import jeraconv
 
-from opendatalinter.column_classifer import ColumnClassifer, ColumnType
+from opendatalinter.column_classifier import ColumnType, ColumnClassifier
 
 
 @pytest.mark.parametrize(('column', 'expected_type'), [
@@ -18,7 +17,7 @@ from opendatalinter.column_classifer import ColumnClassifer, ColumnType
 def test_column_classify(column, expected_type):
     with open("./samples/classify_sample.csv", "r") as f:
         df = pd.read_csv(f, header=0)
-    classifier = ColumnClassifer(df)
+    classifier = ColumnClassifier(df)
 
-    column_types = classifier.perform(jeraconv.J2W())
+    column_types = classifier.perform()
     assert column_types[column] == expected_type
