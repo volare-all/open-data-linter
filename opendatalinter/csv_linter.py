@@ -23,6 +23,8 @@ from .regex import (
     CHRISTIAN_ERA_REGEX,
     NUM_WITH_BRACKETS_REGEX,
     NUM_WITH_NUM_REGEX,
+    VALID_PREFECTURE_NAME,
+    INVALID_PREFECTURE_NAME,
 )
 from .vo import LintResult, InvalidContent, InvalidCellFactory
 from .column_classifer import ColumnClassifer, ColumnType
@@ -317,12 +319,11 @@ class CSVLinter:
         # 都道府県名に該当するセルのうち，完全な都道府県名で列が構成されている場合True
         def is_valid_prefecture_name_column(c_index):
             for name in self.df.iloc[:, c_index]:
-                if self.__is_empty(name):
+                if is_empty(name):
                     continue
 
-                if name in self.INVALID_PREFECTURE_NAME:
+                if name in INVALID_PREFECTURE_NAME:
                     return False
-
             return True
 
         # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，隣接する列に完全一致する都道府県コードがある場合True
@@ -331,20 +332,19 @@ class CSVLinter:
             prefecture_number_column = self.df.iloc[:, number_c_index]
 
             for name, number in zip(prefecture_name_column, prefecture_number_column):
-                if self.__is_empty(name):
+                if is_empty(name):
                     continue
 
                 if name == '北海道' and str(number) == '1':
                     continue
 
                 # 正しい都道府県名が存在する場合，記法が統一されていないためFalse
-                if name in self.VALID_PREFECTURE_NAME:
+                if name in VALID_PREFECTURE_NAME:
                     return False
 
                 # 省略された都道府県名の隣のセルの都道府県コードが一致しない場合False
-                if name in self.INVALID_PREFECTURE_NAME and str(prefectures_numbers[name]) != str(number):
+                if name in INVALID_PREFECTURE_NAME and str(prefectures_numbers[name]) != str(number):
                     return False
-
             return True
 
         # 都道府県を省略した記法で統一されている場合True
@@ -353,21 +353,20 @@ class CSVLinter:
                 if name == '北海道':
                     continue
 
-                if self.__is_empty(name):
+                if is_empty(name):
                     continue
 
-                if name in self.VALID_PREFECTURE_NAME:
+                if name in VALID_PREFECTURE_NAME:
                     return False
 
             return True
 
         def is_invalid_cell(cell):
-            if self.__is_empty(name):
+            if is_empty(name):
                 return False
 
-            if cell in self.INVALID_PREFECTURE_NAME:
+            if cell in INVALID_PREFECTURE_NAME:
                 return True
-
             return False
 
         invalid_cells = []
