@@ -23,6 +23,8 @@ from .regex import (
     CHRISTIAN_ERA_REGEX,
     NUM_WITH_BRACKETS_REGEX,
     NUM_WITH_NUM_REGEX,
+    VALID_PREFECTURE_NAME,
+    INVALID_PREFECTURE_NAME,
 )
 from .vo import LintResult, InvalidContent, InvalidCellFactory
 from .column_classifer import ColumnClassifer, ColumnType
@@ -261,17 +263,11 @@ class CSVLinter:
     @before_check_1_1
     def check_1_12(self):
         """
-        地域コード⼜は地域名称が表記されているか（都道府県名の表記揺れ）
+        正確な地域名称が表記されている．もしくは，隣接するセルに都道府県コードが併記されているか
         """
-        invalid_prefectures = [
-            '青森', '岩手', '宮城', '秋田', '山形', '福島', '茨城', '栃木', '群馬', '埼玉', '千葉',
-            '東京', '神奈川', '新潟', '富山', '石川', '福井', '山梨', '長野', '岐阜', '静岡', '愛知',
-            '三重', '滋賀', '京都', '大阪', '兵庫', '奈良', '和歌山', '鳥取', '島根', '岡山', '広島',
-            '山口', '徳島', '香川', '愛媛', '高知', '福岡', '佐賀', '長崎', '熊本', '大分', '宮崎',
-            '鹿児島', '沖縄'
-        ]
 
         prefectures_numbers = {
+            '北海道': 1,
             '青森': 2,
             '岩手': 3,
             '宮城': 4,
@@ -320,42 +316,108 @@ class CSVLinter:
             '沖縄': 47
         }
 
+        # 都道府県名に該当するセルのうち，完全な都道府県名で列が構成されている場合True
+        def is_valid_prefecture_name_column(c_index):
+            for name in self.df.iloc[:, c_index]:
+                if is_empty(name):
+                    continue
+
+                if name in INVALID_PREFECTURE_NAME:
+                    return False
+            return True
+
+        # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，隣接する列に完全一致する都道府県コードがある場合True
+        def is_valid_prefecture_with_prefecture_code(name_c_index,
+                                                     number_c_index):
+            prefecture_name_column = self.df.iloc[:, name_c_index]
+            prefecture_code_column = self.df.iloc[:, number_c_index]
+
+            for name, number in zip(prefecture_name_column,
+                                    prefecture_code_column):
+                if is_empty(name):
+                    continue
+
+                if name == '北海道' and str(number) == '1':
+                    continue
+
+                # 正しい都道府県名が存在する場合，記法が統一されていないためFalse
+                if name in VALID_PREFECTURE_NAME:
+                    return False
+
+                # 省略された都道府県名の隣のセルの都道府県コードが一致しない場合False
+                if name in INVALID_PREFECTURE_NAME and str(
+                        prefectures_numbers[name]) != str(number):
+                    return False
+            return True
+
+        # 都道府県を省略した記法で統一されている場合True
+        def is_invalid_column(c_index):
+            for name in self.df.iloc[:, c_index]:
+                if name == '北海道':
+                    continue
+
+                if is_empty(name):
+                    continue
+
+                if name in VALID_PREFECTURE_NAME:
+                    return False
+
+            return True
+
+        def is_invalid_cell(cell):
+            if is_empty(name):
+                return False
+
+            if cell in INVALID_PREFECTURE_NAME:
+                return True
+            return False
+
         invalid_cells = []
+        invalid_columns = []
 
+        # 都道府県名に分類される列ごとに判定
         for j in range(len(self.df.columns)):
-            column = self.df.iloc[:, j]
-            for i, elem in enumerate(column):
-                if elem in invalid_prefectures:
-                    print(f"elem: {elem}")
-                    # 両隣に都道府県コードと一致する数字がない場合警告に追加する
-                    if j > 0:
-                        left_elem = self.df.iat[i, j - 1]
-                        if left_elem == prefectures_numbers[elem]:
-                            continue
-                        if type(left_elem) is str:
-                            if is_number(left_elem):
-                                float_left_elem = float(left_elem)
-                                if float_left_elem.is_integer() and int(
-                                        float_left_elem
-                                ) == prefectures_numbers[elem]:
-                                    continue
+            if not self.column_classify[j] == ColumnType.PREFECTURE_NAME:
+                continue
 
-                    if j + 1 < len(self.df.columns):
-                        right_elem = self.df.iat[i, j + 1]
-                        if right_elem == prefectures_numbers[elem]:
-                            continue
-                        if type(right_elem) is str:
-                            if is_number(right_elem):
-                                float_right_elem = float(right_elem)
-                                if float_right_elem.is_integer() and int(
-                                        float_right_elem
-                                ) == prefectures_numbers[elem]:
-                                    continue
+            # 都道府県名に該当するセルのうち，完全な都道府県名で列が構成されている場合valid
+            if is_valid_prefecture_name_column(j):
+                continue
+
+            # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，左に隣接する列に完全一致する都道府県コードがある場合valid
+            if j > 0 and self.column_classify[j -
+                                              1] == ColumnType.PREFECTURE_CODE:
+                if is_valid_prefecture_with_prefecture_code(j, j - 1):
+                    continue
+
+            # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，右に隣接する列に完全一致する都道府県コードがある場合valid
+            if j + 1 < len(self.df.columns) and self.column_classify[
+                    j + 1] == ColumnType.PREFECTURE_CODE:
+                if is_valid_prefecture_with_prefecture_code(j, j + 1):
+                    continue
+
+            # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県名が省略されている．かつ，完全一致する都道府県番号が存在しない場合列単位でinvalid
+            if is_invalid_column(j):
+                invalid_columns.append(
+                    self.content_invalid_cell_factory.create(None, j))
+                continue
+
+            # 都道府県名に該当するセルのうち，該当するセルごとに省略された都道府県名をinvalidとする処理
+            for i, name in enumerate(self.df.iloc[:, j]):
+                if is_invalid_cell(name):
                     invalid_cells.append(
                         self.content_invalid_cell_factory.create(i, j))
 
-        return LintResult.gen_single_error_message_result(
-            "地域名称が正しく表記されていません．", invalid_cells)
+        invalid_contents = []
+        if len(invalid_cells):
+            invalid_contents.append(
+                InvalidContent("都道府県名は「都・道・府・県」まで正しく記入してください", invalid_cells))
+        if len(invalid_columns):
+            invalid_contents.append(
+                InvalidContent("都道府県コードを隣の列に併記する．もしくは，「都・道・府・県」まで正しく記入してください",
+                               invalid_columns))
+
+        return LintResult(len(invalid_contents) == 0, invalid_contents)
 
     @before_check_1_1
     def check_1_13(self):

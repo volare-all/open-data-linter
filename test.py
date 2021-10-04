@@ -101,8 +101,12 @@ class TestCsvLinter(unittest.TestCase):
         self.assertValidLintResult(self.perfect.check_1_12())
         linter = gen_csv_linter("samples/check_1_12.csv")
         result = linter.check_1_12()
-        self.assertEqual({(2, 0), (4, 1), (6, 1)},
-                         set(result.invalid_contents[0].invalid_cells))
+
+        self.assertSetEqual(set(result.invalid_contents[0].invalid_cells),
+                            {(3, 5), (4, 5), (5, 5), (7, 5)})
+
+        self.assertSetEqual(set(result.invalid_contents[1].invalid_cells),
+                            {(None, 8)})
 
     def test_check_1_13(self):
         self.assertValidLintResult(self.perfect.check_1_12())
