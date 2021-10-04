@@ -22,20 +22,14 @@ class ColumnType(Enum):
     OTHER_STRING = 'other_string'
     NONE_CATEGORY = 'none_category'
 
-    @classmethod
-    def is_number(cls, column_type):
-        if column_type in [
-                cls.PREFECTURE_CODE, cls.CHRISTIAN_ERA, cls.DATETIME_CODE,
-                cls.OTHER_NUMBER
-        ]:
-            return True
-        return False
+    def is_number(self):
+        return self in [
+            self.PREFECTURE_CODE, self.CHRISTIAN_ERA, self.DATETIME_CODE,
+            self.OTHER_NUMBER
+        ]
 
-    @classmethod
-    def is_string(cls, column_type):
-        if column_type in [cls.PREFECTURE_NAME, cls.OTHER_STRING]:
-            return True
-        return False
+    def is_string(self):
+        return self in [self.PREFECTURE_NAME, self.OTHER_STRING]
 
 
 class ColumnClassifier:
