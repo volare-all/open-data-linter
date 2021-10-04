@@ -327,11 +327,13 @@ class CSVLinter:
             return True
 
         # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，隣接する列に完全一致する都道府県コードがある場合True
-        def is_valid_prefecture_with_prefecture_number(name_c_index, number_c_index):
+        def is_valid_prefecture_with_prefecture_number(name_c_index,
+                                                       number_c_index):
             prefecture_name_column = self.df.iloc[:, name_c_index]
             prefecture_number_column = self.df.iloc[:, number_c_index]
 
-            for name, number in zip(prefecture_name_column, prefecture_number_column):
+            for name, number in zip(prefecture_name_column,
+                                    prefecture_number_column):
                 if is_empty(name):
                     continue
 
@@ -343,7 +345,8 @@ class CSVLinter:
                     return False
 
                 # 省略された都道府県名の隣のセルの都道府県コードが一致しない場合False
-                if name in INVALID_PREFECTURE_NAME and str(prefectures_numbers[name]) != str(number):
+                if name in INVALID_PREFECTURE_NAME and str(
+                        prefectures_numbers[name]) != str(number):
                     return False
             return True
 
@@ -387,15 +390,15 @@ class CSVLinter:
                     continue
 
             # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，右に隣接する列に完全一致する都道府県コードがある場合valid
-            if j + 1 < len(self.df.columns) and self.column_classify[j + 1]['prefecture_number']:
+            if j + 1 < len(self.df.columns) and self.column_classify[
+                    j + 1]['prefecture_number']:
                 if is_valid_prefecture_with_prefecture_number(j, j + 1):
                     continue
 
             # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県名が省略されている．かつ，完全一致する都道府県番号が存在しない場合列単位でinvalid
             if is_invalid_column(j):
                 invalid_columns.append(
-                    self.content_invalid_cell_factory.create(None, j)
-                )
+                    self.content_invalid_cell_factory.create(None, j))
                 continue
 
             # 都道府県名に該当するセルのうち，該当するセルごとに省略された都道府県名をinvalidとする処理
@@ -410,12 +413,10 @@ class CSVLinter:
                 InvalidContent("都道府県名は「都・道・府・県」まで正しく記入してください", invalid_cells))
         if len(invalid_columns):
             invalid_contents.append(
-                InvalidContent("都道府県コードを隣の列に併記する．もしくは，「都・道・府・県」まで正しく記入してください", invalid_columns))
+                InvalidContent("都道府県コードを隣の列に併記する．もしくは，「都・道・府・県」まで正しく記入してください",
+                               invalid_columns))
 
-        return LintResult(
-            len(invalid_contents) == 0,
-            invalid_contents
-        )
+        return LintResult(len(invalid_contents) == 0, invalid_contents)
 
     @before_check_1_1
     def check_1_13(self):
@@ -509,7 +510,7 @@ class CSVLinter:
             # print(f"len(df): {len(self.df)}")
             try:
                 if (integer_count /
-                        (len(self.df) - empty_count)) > self.INTEGER_RATE:
+                    (len(self.df) - empty_count)) > self.INTEGER_RATE:
                     array.append(True)
                 else:
                     array.append(False)

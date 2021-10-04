@@ -103,12 +103,10 @@ class TestCsvLinter(unittest.TestCase):
         result = linter.check_1_12()
 
         self.assertSetEqual(set(result.invalid_contents[0].invalid_cells),
-                            {(3, 5), (4, 5), (5, 5), (7, 5)}
-                            )
+                            {(3, 5), (4, 5), (5, 5), (7, 5)})
 
         self.assertSetEqual(set(result.invalid_contents[1].invalid_cells),
-                            {(None, 8)}
-                            )
+                            {(None, 8)})
 
     def test_check_1_13(self):
         self.assertValidLintResult(self.perfect.check_1_12())

@@ -96,13 +96,17 @@ class ColumnClassifer:
 
                     items_counter[ColumnType.NONE_CATEGORY] += 1
 
-            if is_match_category(ColumnType.OTHER_NUMBER, items_counter, empty_counter):
-                if is_match_category(ColumnType.DATETIME_CODE, items_counter, empty_counter):
+            if is_match_category(ColumnType.OTHER_NUMBER, items_counter,
+                                 empty_counter):
+                if is_match_category(ColumnType.DATETIME_CODE, items_counter,
+                                     empty_counter):
                     result.append(ColumnType.DATETIME_CODE)
                     continue
 
-                if is_match_category(ColumnType.CHRISTIAN_ERA, items_counter, empty_counter):
-                    if is_match_category(ColumnType.PREFECTURE_CODE, items_counter, empty_counter):
+                if is_match_category(ColumnType.CHRISTIAN_ERA, items_counter,
+                                     empty_counter):
+                    if is_match_category(ColumnType.PREFECTURE_CODE,
+                                         items_counter, empty_counter):
                         result.append(ColumnType.PREFECTURE_CODE)
                         continue
 
@@ -112,15 +116,18 @@ class ColumnClassifer:
                 result.append(ColumnType.OTHER_NUMBER)
                 continue
 
-            if is_match_category(ColumnType.OTHER_STRING, items_counter, empty_counter):
-                if is_match_category(ColumnType.PREFECTURE_NAME, items_counter, empty_counter):
+            if is_match_category(ColumnType.OTHER_STRING, items_counter,
+                                 empty_counter):
+                if is_match_category(ColumnType.PREFECTURE_NAME, items_counter,
+                                     empty_counter):
                     result.append(ColumnType.PREFECTURE_NAME)
                     continue
 
                 result.append(ColumnType.OTHER_STRING)
                 continue
 
-            if is_match_category(ColumnType.JP_CALENDAR_YEAR, items_counter, empty_counter):
+            if is_match_category(ColumnType.JP_CALENDAR_YEAR, items_counter,
+                                 empty_counter):
                 result.append(ColumnType.JP_CALENDAR_YEAR)
                 continue
 
