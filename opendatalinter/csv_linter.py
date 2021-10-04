@@ -377,7 +377,7 @@ class CSVLinter:
 
         # 都道府県名に分類される列ごとに判定
         for j in range(len(self.df.columns)):
-            if not self.column_classify[j]['prefecture_name']:
+            if not self.column_classify[j] == ColumnType.PREFECTURE_NAME:
                 continue
 
             # 都道府県名に該当するセルのうち，完全な都道府県名で列が構成されている場合valid
@@ -385,13 +385,14 @@ class CSVLinter:
                 continue
 
             # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，左に隣接する列に完全一致する都道府県コードがある場合valid
-            if j > 0 and self.column_classify[j - 1]['prefecture_number']:
+            if j > 0 and self.column_classify[j -
+                                              1] == ColumnType.PREFECTURE_CODE:
                 if is_valid_prefecture_with_prefecture_number(j, j - 1):
                     continue
 
             # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，右に隣接する列に完全一致する都道府県コードがある場合valid
             if j + 1 < len(self.df.columns) and self.column_classify[
-                    j + 1]['prefecture_number']:
+                    j + 1] == ColumnType.PREFECTURE_CODE:
                 if is_valid_prefecture_with_prefecture_number(j, j + 1):
                     continue
 
