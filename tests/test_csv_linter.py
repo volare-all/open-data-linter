@@ -9,7 +9,7 @@ def gen_csv_linter(file_path: str) -> CSVLinter:
         return CSVLinter(f.read(), file_path)
 
 
-def assertValidLintResult(result: LintResult):
+def assert_valid_lint_result(result: LintResult):
     assert result.is_valid
     assert len(result.invalid_contents) == 0
 
@@ -26,16 +26,16 @@ def perfect():
 
 def test_empty_header():
     linter = gen_csv_linter("./samples/all_num.csv")
-    assertValidLintResult(linter.check_1_1())
-    assertValidLintResult(linter.check_1_2())
-    assertValidLintResult(linter.check_1_3())
-    assertValidLintResult(linter.check_1_5())
-    assertValidLintResult(linter.check_1_6())
-    assertValidLintResult(linter.check_1_10())
-    assertValidLintResult(linter.check_1_11())
-    assertValidLintResult(linter.check_1_12())
-    assertValidLintResult(linter.check_1_13())
-    assertValidLintResult(linter.check_2_1())
+    assert_valid_lint_result(linter.check_1_1())
+    assert_valid_lint_result(linter.check_1_2())
+    assert_valid_lint_result(linter.check_1_3())
+    assert_valid_lint_result(linter.check_1_5())
+    assert_valid_lint_result(linter.check_1_6())
+    assert_valid_lint_result(linter.check_1_10())
+    assert_valid_lint_result(linter.check_1_11())
+    assert_valid_lint_result(linter.check_1_12())
+    assert_valid_lint_result(linter.check_1_13())
+    assert_valid_lint_result(linter.check_2_1())
 
 
 def test_check_1_1(nb01h0013, perfect):
@@ -43,12 +43,12 @@ def test_check_1_1(nb01h0013, perfect):
 
     assert nb01h0013.check_1_1().is_valid
     assert not text.check_1_1().is_valid
-    assertValidLintResult(perfect.check_1_1())
+    assert_valid_lint_result(perfect.check_1_1())
 
 
 def test_check_1_2(nb01h0013, perfect):
     assert nb01h0013.check_1_2().is_valid
-    assertValidLintResult(perfect.check_1_2())
+    assert_valid_lint_result(perfect.check_1_2())
 
     linter = gen_csv_linter("./samples/check_1_2.csv")
     res = linter.check_1_2()
@@ -61,7 +61,7 @@ def test_check_1_2(nb01h0013, perfect):
 
 
 def test_check_1_3(perfect):
-    assertValidLintResult(perfect.check_1_3())
+    assert_valid_lint_result(perfect.check_1_3())
 
     linter = gen_csv_linter("./samples/check_1_3.csv")
     result = linter.check_1_3()
@@ -70,7 +70,7 @@ def test_check_1_3(perfect):
 
 
 def test_check_1_5(perfect):
-    assertValidLintResult(perfect.check_1_5())
+    assert_valid_lint_result(perfect.check_1_5())
 
     linter = gen_csv_linter("./samples/check_1_5.csv")
     result = linter.check_1_5()
@@ -79,7 +79,7 @@ def test_check_1_5(perfect):
 
 
 def test_check_1_6(perfect):
-    assertValidLintResult(perfect.check_1_6())
+    assert_valid_lint_result(perfect.check_1_6())
 
     linter = gen_csv_linter("./samples/check_1_6.csv")
     result = linter.check_1_6()
@@ -91,7 +91,7 @@ def test_check_1_6(perfect):
 
 def test_check_1_10(nb01h0013, perfect):
     assert nb01h0013.check_1_10().is_valid
-    assertValidLintResult(perfect.check_1_10())
+    assert_valid_lint_result(perfect.check_1_10())
 
     nb01h0013_sjis = gen_csv_linter("./samples/nb01h0013_sjis.csv")
     assert nb01h0013_sjis.check_1_10().is_valid
@@ -105,7 +105,7 @@ def test_check_1_10(nb01h0013, perfect):
 
 
 def test_check_1_11(perfect):
-    assertValidLintResult(perfect.check_1_11())
+    assert_valid_lint_result(perfect.check_1_11())
 
     linter = gen_csv_linter("./samples/check_1_11.csv")
     result = linter.check_1_11()
@@ -114,7 +114,7 @@ def test_check_1_11(perfect):
 
 
 def test_check_1_12(perfect):
-    assertValidLintResult(perfect.check_1_12())
+    assert_valid_lint_result(perfect.check_1_12())
 
     linter = gen_csv_linter("./samples/check_1_12.csv")
     result = linter.check_1_12()
@@ -124,7 +124,7 @@ def test_check_1_12(perfect):
 
 
 def test_check_1_13(perfect):
-    assertValidLintResult(perfect.check_1_12())
+    assert_valid_lint_result(perfect.check_1_12())
 
     linter = gen_csv_linter("./samples/check_1_13.csv")
     result = linter.check_1_13()
@@ -133,7 +133,7 @@ def test_check_1_13(perfect):
 
 
 def test_check_2_1(perfect):
-    assertValidLintResult(perfect.check_2_1())
+    assert_valid_lint_result(perfect.check_2_1())
 
     linter = gen_csv_linter("./samples/check_2_1.csv")
     result = linter.check_2_1()
