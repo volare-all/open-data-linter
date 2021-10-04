@@ -11,6 +11,7 @@ from .csv_structure_analyzer import CSVStructureAnalyzer
 from .errors import HeaderEstimateError
 from .funcs import (
     before_check_1_1,
+    is_fullmatch_regex,
     is_number,
     is_empty,
     is_include_number,
@@ -25,6 +26,7 @@ from .regex import (
     NUM_WITH_NUM_REGEX,
     VALID_PREFECTURE_NAME,
     INVALID_PREFECTURE_NAME,
+    NUMBER_STRING_REGEX,
 )
 from .vo import LintResult, InvalidContent, InvalidCellFactory
 from .column_classifer import ColumnClassifer, ColumnType
@@ -131,24 +133,54 @@ class CSVLinter:
     @before_check_1_1
     def check_1_3(self):
         """
-        数値データは数値属性とし、⽂字列を含まないこと
+        数値データは数値属性とし、⽂字列を含まないこと.
+        単位が列に一律に含まれている場合，列ごとに警告する
         """
+
         invalid_cells = []
+        invalid_columns = []
 
         for j in range(len(self.df.columns)):
-            if not ColumnType.is_number(self.column_classify[j]):
-                continue
-
             column = self.df.iloc[:, j]
-            for i, elem in enumerate(column):
-                if is_number(elem):
-                    continue
-                if is_include_number(elem):
-                    invalid_cells.append(
-                        self.content_invalid_cell_factory.create(i, j))
 
-        return LintResult.gen_single_error_message_result(
-            "数値データの列に文字が含まれています", invalid_cells)
+            # セルごとのチェック
+            if ColumnType.is_number(self.column_classify[j]):
+                for i, elem in enumerate(column):
+                    # TODO: 問題のあるセルの定義が以下の分岐で拾えているか要確認
+                    if is_number(elem):
+                        continue
+                    if is_include_number(elem):
+                        invalid_cells.append(
+                            self.content_invalid_cell_factory.create(i, j))
+
+            empty_count = 0
+            number_string_pattern_cell_count = 0  # ex.1000円
+
+            # 統一された列の単位チェック
+            # TODO: sample/check_1_3の4列目のような列の判定を要確認
+            if self.column_classify[j] == ColumnType.NONE_CATEGORY:
+                for elem in column:
+                    if is_include_number(elem) and is_fullmatch_regex(
+                            NUMBER_STRING_REGEX, elem):
+                        number_string_pattern_cell_count += 1
+                    else:
+                        break
+
+                if number_string_pattern_cell_count + empty_count == len(
+                        self.df):
+                    invalid_columns.append(
+                        self.content_invalid_cell_factory.create(None, j))
+
+        invalid_contents = []
+        if len(invalid_cells):
+            invalid_contents.append(
+                InvalidContent("数値データのセルに文字や空欄が含まれています", invalid_cells))
+        if len(invalid_columns):
+            invalid_contents.append(
+                InvalidContent("数値データの列に単位などの文字が含まれていないか確認してください．",
+                               invalid_columns))
+
+        return LintResult(len(invalid_contents) == 0, invalid_contents)
 
     @before_check_1_1
     def check_1_5(self):
@@ -508,7 +540,7 @@ class CSVLinter:
             # print(f"len(df): {len(self.df)}")
             try:
                 if (integer_count /
-                    (len(self.df) - empty_count)) > self.INTEGER_RATE:
+                        (len(self.df) - empty_count)) > self.INTEGER_RATE:
                     array.append(True)
                 else:
                     array.append(False)
