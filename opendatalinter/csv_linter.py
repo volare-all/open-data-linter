@@ -425,7 +425,7 @@ class CSVLinter:
 
         for j in range(len(self.df.columns)):
             column = self.df.iloc[:, j]
-            if ColumnType.is_number(self.column_classify[j]):
+            if self.column_classify[j].is_number():
                 for i, elem in enumerate(column):
                     if is_number(elem) or is_include_number(elem):
                         continue
