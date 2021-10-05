@@ -431,18 +431,16 @@ class CSVLinter:
 
         for j in range(len(self.df.columns)):
             column = self.df.iloc[:, j]
-            if self.is_num_per_row[j]:
+            if ColumnType.is_number(self.column_classify[j]):
                 for i, elem in enumerate(column):
-                    if is_number(elem):
+                    if is_number(elem) or is_include_number(elem):
                         continue
-                    if is_empty(elem):
-                        if elem == "***":
-                            continue
+                    if elem not in ["***", "X", "0"]:
                         invalid_cells.append(
                             self.content_invalid_cell_factory.create(i, j))
 
         return LintResult.gen_single_error_message_result(
-            "空の数値データに適切な記号が入っていません．", invalid_cells)
+            "数値データの列の空欄にはチェック項目1-13に従い，'***','X','0'のいずれかを適切に入力してください", invalid_cells)
 
     @before_check_1_1
     def check_2_1(self):
