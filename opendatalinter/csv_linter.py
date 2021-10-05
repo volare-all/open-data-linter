@@ -153,18 +153,20 @@ class CSVLinter:
                         invalid_cells.append(
                             self.content_invalid_cell_factory.create(i, j))
 
-            empty_count = 0
-            number_string_pattern_cell_count = 0  # ex.1000円
-
             # 統一された列の単位チェック
             # TODO: sample/check_1_3の4列目のような列の判定を要確認
             if self.column_classify[j] == ColumnType.NONE_CATEGORY:
+                empty_count = 0
+                number_string_pattern_cell_count = 0  # ex.1000円
+
                 for elem in column:
+                    if is_empty(elem):
+                        empty_count += 1
+                        continue
+
                     if is_include_number(elem) and is_fullmatch_regex(
                             NUMBER_STRING_REGEX, elem):
                         number_string_pattern_cell_count += 1
-                    else:
-                        break
 
                 if number_string_pattern_cell_count + empty_count == len(
                         self.df):
@@ -540,7 +542,7 @@ class CSVLinter:
             # print(f"len(df): {len(self.df)}")
             try:
                 if (integer_count /
-                    (len(self.df) - empty_count)) > self.INTEGER_RATE:
+                        (len(self.df) - empty_count)) > self.INTEGER_RATE:
                     array.append(True)
                 else:
                     array.append(False)
