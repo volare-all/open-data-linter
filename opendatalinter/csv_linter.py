@@ -427,7 +427,8 @@ class CSVLinter:
             column = self.df.iloc[:, j]
             if self.column_classify[j].is_number():
                 for i, elem in enumerate(column):
-                    if is_number(elem) or is_include_number(elem):
+                    # ex.1000円のようなケースはcheck_1_3でチェックするためスルー
+                    if is_include_number(elem):
                         continue
                     if elem not in ["***", "X", "0"]:
                         invalid_cells.append(
