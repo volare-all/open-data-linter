@@ -72,9 +72,7 @@ def is_match_regex(regex, elem):
 
 
 def is_fullmatch_regex(regex, elem):
-    if regex.fullmatch(str(elem)):
-        return True
-    return False
+    return regex.fullmatch(str(elem)) is not None
 
 
 def is_empty(elem):
@@ -85,7 +83,7 @@ def is_empty(elem):
     if pd.isnull(elem):
         return True
     if type(elem) is str and any(
-        [r.match(str(elem)) is not None for r in EMPTY_REGEX_LIST]):
+            [r.match(str(elem)) is not None for r in EMPTY_REGEX_LIST]):
         return True
 
 
