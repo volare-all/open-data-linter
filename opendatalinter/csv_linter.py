@@ -31,7 +31,6 @@ from .column_classifier import ColumnClassifier, ColumnType
 
 
 class CSVLinter:
-    INTEGER_RATE = 0.8  # 列を数値列か判定する基準(数値が含まれているセル数 / 列の長さ)
     CLASSIFY_RATE = 0.8  # 列の分類の判定基準(値が含まれているセル数 / (列の長さ - 空のセル))
 
     def __init__(self,
@@ -64,8 +63,6 @@ class CSVLinter:
             self.df = csv_structure_analyzer.gen_rows_df()
             self.column_classify = ColumnClassifier(
                 self.df, self.CLASSIFY_RATE).perform()
-            self.is_num_per_row = self.calc_is_num_per_row()
-            print(self.is_num_per_row)
         except UnicodeDecodeError:
             if self.encoding == "utf-8":
                 self.cache["1-1"] = LintResult.gen_simple_error_result(
@@ -424,9 +421,6 @@ class CSVLinter:
         """
         数値データの同⼀列内に特殊記号（秘匿等）が含まれる場合
         """
-        # 列ごとにループを回す
-        # 列が数値データであることを確認する
-        # dtypeがintならstringになりうるセルがないのでTrueを返して終了する
         invalid_cells = []
 
         for j in range(len(self.df.columns)):
@@ -475,47 +469,6 @@ class CSVLinter:
         return LintResult(
             len(invalid_row_cells) + len(invalid_column_cells) == 0,
             invalid_contents)
-
-    def calc_is_num_per_row(self):
-        """
-        返り値: [配列]列ごとの数値列であるかの真偽値
-
-        数値列の定義：数値が含まれているセルが全体の`INTEGER_RATE`以上の割合を占める
-        """
-
-        array = []
-        for i in range(len(self.df.columns)):
-            column = self.df.iloc[:, i]
-            integer_count = 0
-            empty_count = 0
-            for elem in column:
-                # print(f"\t\t{integer_count}")
-                # print(f"\t + {elem}")
-
-                if is_empty(elem):
-                    empty_count += 1
-                    continue
-
-                if is_number(elem):
-                    integer_count += 1
-                    continue
-
-                if is_include_number(elem):
-                    integer_count += 1
-                    continue
-
-            # print(f"integer_count: {integer_count}")
-            # print(f"empty_count: {empty_count}")
-            # print(f"len(df): {len(self.df)}")
-            try:
-                if (integer_count /
-                        (len(self.df) - empty_count)) > self.INTEGER_RATE:
-                    array.append(True)
-                else:
-                    array.append(False)
-            except ZeroDivisionError:
-                array.append(False)
-        return array
 
     def __decode(self, data: bytes) -> str:
         self.encoding = chardet.detect(data)['encoding']
