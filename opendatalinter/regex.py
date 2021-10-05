@@ -8,7 +8,7 @@ DATETIME_CODE_REGEX = re.compile(r"^(\d{4})[01][012]\d{4}$")
 CHRISTIAN_ERA_REGEX = re.compile(r"^(\d{1,4})$")
 NUM_WITH_BRACKETS_REGEX = re.compile(r"^(\d+?)(\s*?)[\(（)](.+?)[\)）]")
 NUM_WITH_NUM_REGEX = re.compile(r"^(\d+?)((\s+?)(\d+?))+?")
-NUMBER_STRING_REGEX = re.compile('[0-9]+[^0-9]+')
+NUMBER_STRING_REGEX = re.compile('\d+[^\d]+')
 
 VALID_PREFECTURE_NAME = [
     '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県', '茨城県', '栃木県', '群馬県',
