@@ -164,8 +164,7 @@ class CSVLinter:
                         empty_count += 1
                         continue
 
-                    if is_include_number(elem) and is_fullmatch_regex(
-                            NUMBER_STRING_REGEX, elem):
+                    if is_fullmatch_regex(NUMBER_STRING_REGEX, elem):
                         number_string_pattern_cell_count += 1
 
                 if number_string_pattern_cell_count + empty_count == len(
