@@ -429,17 +429,17 @@ class CSVLinter:
         # dtypeがintならstringになりうるセルがないのでTrueを返して終了する
         invalid_cells = []
 
-        for i in range(len(self.df.columns)):
-            column = self.df.iloc[:, i]
-            if self.is_num_per_row[i]:
-                for j, elem in enumerate(column):
+        for j in range(len(self.df.columns)):
+            column = self.df.iloc[:, j]
+            if self.is_num_per_row[j]:
+                for i, elem in enumerate(column):
                     if is_number(elem):
                         continue
                     if is_empty(elem):
                         if elem == "***":
                             continue
                         invalid_cells.append(
-                            self.content_invalid_cell_factory.create(j, i))
+                            self.content_invalid_cell_factory.create(i, j))
 
         return LintResult.gen_single_error_message_result(
             "空の数値データに適切な記号が入っていません．", invalid_cells)
@@ -511,7 +511,7 @@ class CSVLinter:
             # print(f"len(df): {len(self.df)}")
             try:
                 if (integer_count /
-                    (len(self.df) - empty_count)) > self.INTEGER_RATE:
+                        (len(self.df) - empty_count)) > self.INTEGER_RATE:
                     array.append(True)
                 else:
                     array.append(False)
