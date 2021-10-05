@@ -144,7 +144,7 @@ class CSVLinter:
             column = self.df.iloc[:, j]
 
             # セルごとのチェック
-            if ColumnType.is_number(self.column_classify[j]):
+            if self.column_classify[j].is_number():
                 for i, elem in enumerate(column):
                     # TODO: 問題のあるセルの定義が以下の分岐で拾えているか要確認
                     if is_number(elem):
