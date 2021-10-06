@@ -11,7 +11,6 @@ from .csv_structure_analyzer import CSVStructureAnalyzer
 from .errors import HeaderEstimateError
 from .funcs import (
     before_check_1_1,
-    is_fullmatch_regex,
     is_number,
     is_empty,
     is_include_number,
@@ -164,7 +163,7 @@ class CSVLinter:
                         empty_count += 1
                         continue
 
-                    if is_fullmatch_regex(NUMBER_STRING_REGEX, elem):
+                    if NUMBER_STRING_REGEX.match(str(elem)):
                         number_string_pattern_cell_count += 1
 
                 if number_string_pattern_cell_count + empty_count == len(

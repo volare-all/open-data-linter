@@ -63,18 +63,6 @@ def is_prefecture_name(elem):
     return elem in (VALID_PREFECTURE_NAME + INVALID_PREFECTURE_NAME)
 
 
-def is_match_regex(regex, elem):
-    result = regex.match(str(elem))
-    if result is None:
-        return False
-
-    return True
-
-
-def is_fullmatch_regex(regex, elem):
-    return regex.fullmatch(str(elem)) is not None
-
-
 def is_empty(elem):
     """
     sが空のセル相当であるか
