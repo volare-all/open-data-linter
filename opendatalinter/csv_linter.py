@@ -500,6 +500,21 @@ class CSVLinter:
             len(invalid_row_cells) + len(invalid_column_cells) == 0,
             invalid_contents)
 
+    @before_check_1_1
+    def check_2_x(self):
+        """
+        check_2_1 & check_2_2
+        データが分断されていないか確認
+        """
+        column_results = self.df.isnull().all(axis=1)
+        row_results = self.df.isnull().all()
+
+        if column_results.sum() + row_results.sum():
+            return LintResult.gen_simple_error_result(
+                "データが分断されている，もしくは複数の表を記入していないか確認してください")
+        else:
+            return LintResult(True, [])
+
     def __decode(self, data: bytes) -> str:
         self.encoding = chardet.detect(data)['encoding']
         self.encoding = 'utf-8' if self.encoding is None else self.encoding
