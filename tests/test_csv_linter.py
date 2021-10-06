@@ -35,7 +35,6 @@ def test_empty_header():
     assert_valid_lint_result(linter.check_1_11())
     assert_valid_lint_result(linter.check_1_12())
     assert_valid_lint_result(linter.check_1_13())
-    assert_valid_lint_result(linter.check_2_1())
     assert_valid_lint_result(linter.check_2_x())
 
 
@@ -135,17 +134,8 @@ def test_check_1_13(perfect):
         {(2, 0), (4, 0), (5, 0)}
 
 
-def test_check_2_1(perfect):
-    assert_valid_lint_result(perfect.check_2_1())
-
-    linter = gen_csv_linter("./samples/check_2_1.csv")
-    result = linter.check_2_1()
-    assert set(result.invalid_contents[0].invalid_cells) == {(None, 18)}
-    assert set(result.invalid_contents[1].invalid_cells) == {(22, None)}
-
-
 def test_check_2_x(perfect):
-    assert_valid_lint_result(perfect.check_2_1())
+    assert_valid_lint_result(perfect.check_2_x())
 
     linter = gen_csv_linter("./samples/check_2_1.csv")
-    assert not linter.check_2_1().is_valid
+    assert not linter.check_2_x().is_valid

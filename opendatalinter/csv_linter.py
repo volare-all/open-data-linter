@@ -467,40 +467,6 @@ class CSVLinter:
             "数値データの列の空欄にはチェック項目1-13に従い，'***','X','0'のいずれかを適切に入力してください", invalid_cells)
 
     @before_check_1_1
-    def check_2_1(self):
-        """
-        データが分断されていないか
-        """
-        invalid_row_cells = []
-        invalid_column_cells = []
-
-        # データがない列がないか確認する
-        results = self.df.isnull().all(axis=1)
-        for i, result in enumerate(results):
-            if result:
-                invalid_column_cells.append(
-                    self.content_invalid_cell_factory.create(i, None))
-
-        # データがない行がないか確認する
-        results = self.df.isnull().all()
-        for i, result in enumerate(results):
-            if result:
-                invalid_row_cells.append(
-                    self.content_invalid_cell_factory.create(None, i))
-
-        invalid_contents = []
-        if len(invalid_row_cells):
-            invalid_contents.append(
-                InvalidContent("データが入っていない列が入っています.", invalid_row_cells))
-        if len(invalid_column_cells):
-            invalid_contents.append(
-                InvalidContent("データが入っていない行が入っています.", invalid_column_cells))
-
-        return LintResult(
-            len(invalid_row_cells) + len(invalid_column_cells) == 0,
-            invalid_contents)
-
-    @before_check_1_1
     def check_2_x(self):
         """
         check_2_1 & check_2_2
