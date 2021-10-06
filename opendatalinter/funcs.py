@@ -82,7 +82,7 @@ def is_include_number(elem):
     if pd.isnull(elem):
         return False
 
-    return any(map(str.isdigit, elem))
+    return any(map(str.isdigit, str(elem)))
 
 
 def is_jp_calendar_year(j2w: jeraconv.J2W, year_str: str) -> bool:
