@@ -482,38 +482,19 @@ class CSVLinter:
             invalid_cells)
 
     @before_check_1_1
-    def check_2_1(self):
+    def check_2_x(self):
         """
-        データが分断されていないか
+        check_2_1 & check_2_2
+        データが分断されていないか確認
         """
-        invalid_row_cells = []
-        invalid_column_cells = []
+        column_results = self.df.isnull().all(axis=1)
+        row_results = self.df.isnull().all()
 
-        # データがない列がないか確認する
-        results = self.df.isnull().all(axis=1)
-        for i, result in enumerate(results):
-            if result:
-                invalid_column_cells.append(
-                    self.content_invalid_cell_factory.create(i, None))
-
-        # データがない行がないか確認する
-        results = self.df.isnull().all()
-        for i, result in enumerate(results):
-            if result:
-                invalid_row_cells.append(
-                    self.content_invalid_cell_factory.create(None, i))
-
-        invalid_contents = []
-        if len(invalid_row_cells):
-            invalid_contents.append(
-                InvalidContent("データが入っていない列が入っています.", invalid_row_cells))
-        if len(invalid_column_cells):
-            invalid_contents.append(
-                InvalidContent("データが入っていない行が入っています.", invalid_column_cells))
-
-        return LintResult(
-            len(invalid_row_cells) + len(invalid_column_cells) == 0,
-            invalid_contents)
+        if column_results.sum() + row_results.sum():
+            return LintResult.gen_simple_error_result(
+                "データが分断されている，もしくは複数の表を記入していないか確認してください")
+        else:
+            return LintResult(True, [])
 
     def __decode(self, data: bytes) -> str:
         self.encoding = chardet.detect(data)['encoding']
