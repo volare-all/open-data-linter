@@ -456,7 +456,7 @@ class CSVLinter:
             column = self.df.iloc[:, j]
             if self.column_classify[j].is_number():
                 for i, elem in enumerate(column):
-                    # ex.1000円のようなケースはcheck_1_3でチェックするためスルー
+                    # ex.1000円のようなケースはcheck_1_3でチェックするためスルー
                     if is_include_number(elem):
                         continue
                     if elem not in ["***", "X", "0"]:
