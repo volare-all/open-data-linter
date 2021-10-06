@@ -4,7 +4,7 @@ from typing import Dict, Tuple
 from jeraconv import jeraconv
 
 from .funcs import (is_number, is_string, is_prefecture_code,
-                    is_prefecture_name, is_match_regex, is_empty,
+                    is_prefecture_name, is_empty,
                     is_jp_calendar_year)
 from .regex import (
     CHRISTIAN_ERA_REGEX,
@@ -71,10 +71,10 @@ class ColumnClassifier:
                 counts[ColumnType.PREFECTURE_CODE] += 1
                 counts[ColumnType.CHRISTIAN_ERA] += 1
                 counts[ColumnType.OTHER_NUMBER] += 1
-            elif is_match_regex(CHRISTIAN_ERA_REGEX, elem):
+            elif CHRISTIAN_ERA_REGEX.match(str(elem)):
                 counts[ColumnType.CHRISTIAN_ERA] += 1
                 counts[ColumnType.OTHER_NUMBER] += 1
-            elif is_match_regex(DATETIME_CODE_REGEX, elem):
+            elif DATETIME_CODE_REGEX.match(str(elem)):
                 counts[ColumnType.DATETIME_CODE] += 1
                 counts[ColumnType.OTHER_NUMBER] += 1
             elif is_number(elem):
