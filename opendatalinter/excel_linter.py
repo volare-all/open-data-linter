@@ -5,6 +5,7 @@ import openpyxl
 
 from .csv_linter import CSVLinter
 from .vo import LintResult
+from .funcs import before_check_1_1
 
 
 def ws2csv(ws) -> str:
@@ -40,7 +41,11 @@ class ExcelLinter:
                                     title_line_num=title_line_num,
                                     header_line_num=header_line_num)
 
+    @before_check_1_1
     def check_1_4(self):
+        """
+        セルの結合をしていないか
+        """
         invalid_cells = []
         for merged_cell in self.ws.merged_cells:
             b = merged_cell.bounds
@@ -48,6 +53,7 @@ class ExcelLinter:
         return LintResult.gen_single_error_message_result(
             "結合されたセルが存在します", invalid_cells)
 
+    @before_check_1_1
     def check_1_7(self):
         """
         数式を使⽤している場合は、数値データに修正しているか。

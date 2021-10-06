@@ -180,6 +180,13 @@ class CSVLinter:
         return LintResult(len(invalid_contents) == 0, invalid_contents)
 
     @before_check_1_1
+    def check_1_4(self):
+        """
+        セルの結合をしていないか
+        """
+        return LintResult(True, [])
+
+    @before_check_1_1
     def check_1_5(self):
         """
         スペースや改⾏等で体裁を整えていないか。
@@ -210,6 +217,13 @@ class CSVLinter:
                 np.argwhere(self.header_df.isnull().values)))
         return LintResult.gen_single_error_message_result(
             "ヘッダーに空欄があります", invalid_cells)
+
+    @before_check_1_1
+    def check_1_7(self):
+        """
+        数式を使⽤している場合は、数値データに修正しているか。
+        """
+        return LintResult(True, [])
 
     @before_check_1_1
     def check_1_10(self):
@@ -464,7 +478,8 @@ class CSVLinter:
                             self.content_invalid_cell_factory.create(i, j))
 
         return LintResult.gen_single_error_message_result(
-            "数値データの列の空欄にはチェック項目1-13に従い，'***','X','0'のいずれかを適切に入力してください", invalid_cells)
+            "数値データの列の空欄にはチェック項目1-13に従い，'***','X','0'のいずれかを適切に入力してください",
+            invalid_cells)
 
     @before_check_1_1
     def check_2_1(self):
