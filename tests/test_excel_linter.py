@@ -1,7 +1,11 @@
+import os
+
 from opendatalinter import ExcelLinter
 
 
 def gen_excel_linter(file_path: str) -> ExcelLinter:
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             file_path)
     with open(file_path, "rb") as f:
         return ExcelLinter(f.read(), file_path)
 

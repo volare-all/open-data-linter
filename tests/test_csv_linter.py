@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from opendatalinter import CSVLinter
@@ -5,6 +6,8 @@ from opendatalinter.vo import LintResult
 
 
 def gen_csv_linter(file_path: str) -> CSVLinter:
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             file_path)
     with open(file_path, "rb") as f:
         return CSVLinter(f.read(), file_path)
 

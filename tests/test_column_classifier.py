@@ -1,5 +1,7 @@
-import pandas as pd
+import os
 import pytest
+
+import pandas as pd
 
 from opendatalinter.column_classifier import ColumnType, ColumnClassifier
 
@@ -15,7 +17,9 @@ from opendatalinter.column_classifier import ColumnType, ColumnClassifier
     (14, ColumnType.NONE_CATEGORY),
 ])
 def test_column_classify(column, expected_type):
-    with open("./samples/classify_sample.csv", "r") as f:
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "./samples/classify_sample.csv")
+    with open(file_path, "r") as f:
         df = pd.read_csv(f, header=0)
     classifier = ColumnClassifier(df)
 
