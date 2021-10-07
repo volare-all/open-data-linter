@@ -121,11 +121,17 @@ def test_check_1_11(perfect):
 def test_check_1_12(perfect):
     assert_valid_lint_result(perfect.check_1_12())
 
-    linter = gen_csv_linter("./samples/check_1_12.csv")
-    result = linter.check_1_12()
-    assert set(result.invalid_contents[0].invalid_cells) == \
+    linter_1 = gen_csv_linter("./samples/check_1_12_1.csv")
+    result_1 = linter_1.check_1_12()
+    assert set(result_1.invalid_contents[0].invalid_cells) == \
         {(3, 5), (4, 5), (5, 5), (7, 5)}
-    assert set(result.invalid_contents[1].invalid_cells) == {(None, 8)}
+    assert set(result_1.invalid_contents[1].invalid_cells) == {(None, 8)}
+
+    linter_2 = gen_csv_linter("./samples/check_1_12_2.csv")
+    result_2 = linter_2.check_1_12()
+    assert set(result_2.invalid_contents[0].invalid_cells) == \
+        {(4, 5), (5, 5), (6, 5), (8, 5)}
+    assert set(result_2.invalid_contents[1].invalid_cells) == {(None, 8)}
 
 
 def test_check_1_13(perfect):
