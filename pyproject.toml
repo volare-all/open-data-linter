@@ -17,6 +17,8 @@ chardet = "^4.0.0"
 jeraconv = "^0.2.1"
 openpyxl = "^3.0.9"
 pytest = "^6.2.5"
+Sphinx = "^4.2.0"
+sphinx-rtd-theme = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 yapf = "^0.31.0"
