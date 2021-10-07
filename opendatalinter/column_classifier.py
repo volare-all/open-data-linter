@@ -4,8 +4,7 @@ from typing import Dict, Tuple
 from jeraconv import jeraconv
 
 from .funcs import (is_number, is_string, is_prefecture_code,
-                    is_prefecture_name, is_empty,
-                    is_jp_calendar_year)
+                    is_prefecture_name, is_empty, is_jp_calendar_year)
 from .regex import (
     CHRISTIAN_ERA_REGEX,
     DATETIME_CODE_REGEX,

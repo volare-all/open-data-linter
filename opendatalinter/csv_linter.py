@@ -117,11 +117,11 @@ class CSVLinter:
         invalid_contents = []
         if len(comma_separated_invalid_cells):
             invalid_contents.append(
-                InvalidContent("句点によりデータが分割されています",
+                InvalidContent("句点によりデータが分割されています。",
                                comma_separated_invalid_cells))
         if len(num_with_brackets_invalid_cells):
             invalid_contents.append(
-                InvalidContent("括弧によりデータが分割されています",
+                InvalidContent("括弧によりデータが分割されています。",
                                num_with_brackets_invalid_cells))
 
         return LintResult(not (bool(len(invalid_contents))), invalid_contents)
@@ -171,10 +171,10 @@ class CSVLinter:
         invalid_contents = []
         if len(invalid_cells):
             invalid_contents.append(
-                InvalidContent("数値データのセルに文字や空欄が含まれています", invalid_cells))
+                InvalidContent("数値データに文字や空欄が含まれています。", invalid_cells))
         if len(invalid_columns):
             invalid_contents.append(
-                InvalidContent("数値データの列に単位などの文字が含まれていないか確認してください．",
+                InvalidContent("数値データの列に単位などの文字が含まれている可能性があります。",
                                invalid_columns))
 
         return LintResult(len(invalid_contents) == 0, invalid_contents)
@@ -205,7 +205,7 @@ class CSVLinter:
                     indices))
 
         return LintResult.gen_single_error_message_result(
-            "スペースや改⾏が含まれています", invalid_cells)
+            "スペースや改⾏が含まれています。", invalid_cells)
 
     @before_check_1_1
     def check_1_6(self):
@@ -216,7 +216,7 @@ class CSVLinter:
             map(lambda t: self.header_invalid_cell_factory.create(t[0], t[1]),
                 np.argwhere(self.header_df.isnull().values)))
         return LintResult.gen_single_error_message_result(
-            "ヘッダーに空欄があります", invalid_cells)
+            "ヘッダーに空欄があります。", invalid_cells)
 
     @before_check_1_1
     def check_1_7(self):
@@ -246,7 +246,7 @@ class CSVLinter:
                 start_row += self.header_line_num
 
             return LintResult.gen_single_error_message_result(
-                "機種依存⽂字が含まれています", invalid_cells)
+                "機種依存⽂字が含まれています。", invalid_cells)
 
         return LintResult(True, [])
 
@@ -291,7 +291,7 @@ class CSVLinter:
                         self.content_invalid_cell_factory.create(row, column))
 
         return LintResult.gen_single_error_message_result(
-            "和暦に適切な時間軸コードまたは⻄暦が併記されていません", invalid_cells)
+            "和暦に適切な時間軸コードまたは⻄暦が併記されていません。", invalid_cells)
 
     def __get_jp_calendar_column_indices(self, j2w: jeraconv.J2W) -> List[int]:
         is_jp_calendar_columns = self.df \
@@ -451,10 +451,10 @@ class CSVLinter:
         invalid_contents = []
         if len(invalid_cells):
             invalid_contents.append(
-                InvalidContent("都道府県名は「都・道・府・県」まで正しく記入してください", invalid_cells))
+                InvalidContent("都道府県名は「都・道・府・県」まで正しく記入してください。", invalid_cells))
         if len(invalid_columns):
             invalid_contents.append(
-                InvalidContent("都道府県コードを隣の列に併記する．もしくは，「都・道・府・県」まで正しく記入してください",
+                InvalidContent("都道府県コードを隣の列に併記する。もしくは、「都・道・府・県」まで正しく記入してください。",
                                invalid_columns))
 
         return LintResult(len(invalid_contents) == 0, invalid_contents)
@@ -478,8 +478,7 @@ class CSVLinter:
                             self.content_invalid_cell_factory.create(i, j))
 
         return LintResult.gen_single_error_message_result(
-            "数値データの列の空欄にはチェック項目1-13に従い，'***','X','0'のいずれかを適切に入力してください",
-            invalid_cells)
+            "数値データの列の空欄には'***','X','0'のいずれかを適切に入力してください。", invalid_cells)
 
     @before_check_1_1
     def check_2_x(self):
@@ -492,7 +491,7 @@ class CSVLinter:
 
         if column_results.sum() + row_results.sum():
             return LintResult.gen_simple_error_result(
-                "データが分断されている，もしくは複数の表を記入していないか確認してください")
+                "データのない列や行が含まれている、もしくは複数の表が含まれています。")
         else:
             return LintResult(True, [])
 
