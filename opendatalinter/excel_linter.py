@@ -57,7 +57,7 @@ class ExcelLinter:
         """チェック項目1-7に沿って、数式を使⽤している場合は数値データに修正しているか確認する。
 
         Note:
-            '='から始まるセルをinvalidとみなす。
+            '='から始まるセルを invalid とみなす。
         """
         invalid_cells = []
         for r in range(0, self.ws.max_row):
