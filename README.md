@@ -1,4 +1,4 @@
-# README
+# Open Data Linter
 
 このリポジトリは、総務省が発表している「[統計表における機械判読可能なデータの表記方法の統一ルールの策定](https://www.soumu.go.jp/menu_news/s-news/01toukatsu01_02000186.html)」に基づき、ファイルがそのルールに則しているかを判定するロジックを記述しています。
 
