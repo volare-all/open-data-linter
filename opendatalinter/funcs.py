@@ -1,3 +1,5 @@
+from functools import wraps
+
 import pandas as pd
 from jeraconv import jeraconv
 from typing import Pattern
@@ -101,6 +103,7 @@ def is_valid_date(cell: str, regex: Pattern, year: int) -> bool:
 
 
 def before_check_1_1(func):
+    @wraps(func)
     def wrapper(self, *args, **kwargs):
         if not self.check_1_1().is_valid:
             return LintResult.gen_simple_error_result(

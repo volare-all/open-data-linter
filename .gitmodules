@@ -1,0 +1,4 @@
+[submodule "docs/_build"]
+	path = docs/_build
+	url = git@github.com:volare-all/open-data-linter-docs.git
+	branch = master
