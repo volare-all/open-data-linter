@@ -180,7 +180,7 @@ class CSVLinter:
 
     @before_check_1_1
     def check_1_4(self):
-        """チェック項目1-4に沿って、セルの結合をしていないか確認する。
+        """チェック項目1-4に沿って、セルの結合をしていないか確認する。（Excelのみ適用する）
         """
         return LintResult(True, [])
 
@@ -221,7 +221,7 @@ class CSVLinter:
 
     @before_check_1_1
     def check_1_7(self):
-        """チェック項目1-7に沿って、数式を使⽤している場合は数値データに修正しているか確認する。
+        """チェック項目1-7に沿って、数式を使⽤している場合は数値データに修正しているか確認する。（Excelのみ適用する）
         """
         return LintResult(True, [])
 
