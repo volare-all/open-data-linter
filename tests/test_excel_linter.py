@@ -1,18 +1,9 @@
-import os
-
-from opendatalinter import ExcelLinter
-
-
-def gen_excel_linter(file_path: str) -> ExcelLinter:
-    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             file_path)
-    with open(file_path, "rb") as f:
-        return ExcelLinter(f.read(), file_path)
+from tests.util import gen_excel_linter, assert_valid_lint_result, assert_all_excel_check_is_valid
 
 
 def test_check_1_1():
     linter = gen_excel_linter("./samples/since2003_visitor_arrivals.xlsx")
-    assert linter.check_1_1().is_valid
+    assert_valid_lint_result(linter.check_1_1())
 
 
 def test_check_1_4():
@@ -32,3 +23,8 @@ def test_check_1_7():
     result = linter.check_1_7()
     assert set(result.invalid_contents[0].invalid_cells) == \
            {(1, 2), (2, 0), (2, 2)}
+
+
+def test_including_date_cell():
+    linter = gen_excel_linter("./samples/date.xlsx")
+    assert_all_excel_check_is_valid(linter)
