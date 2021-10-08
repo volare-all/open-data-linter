@@ -80,7 +80,7 @@ class CSVLinter:
                 "未知のエラーが発生しました。お手数ですがサーバー運営者にお問い合わせください。")
 
     def check_1_1(self):
-        """チェック項目1-1に沿って、ファイル形式が Excel か CSV となっているか確認する。
+        """チェック項目1-1に沿って、ファイル形式が Excel か CSV となっているか確認する。
         """
         if "1-1" not in self.cache:
             self.cache["1-1"] = LintResult(True, [])
@@ -221,7 +221,7 @@ class CSVLinter:
 
     @before_check_1_1
     def check_1_7(self):
-        """チェック項目1-7に沿って、数式を使⽤している場合は数値データに修正しているか確認する。（Excelのみ適用する）
+        """チェック項目1-7に沿って、数式が使用されていないかを確認する。（Excelのみ適用する）
         """
         return LintResult(True, [])
 

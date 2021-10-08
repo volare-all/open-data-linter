@@ -55,7 +55,9 @@ class ExcelLinter:
     @before_check_1_1
     def check_1_7(self):
         """チェック項目1-7に沿って、数式を使⽤している場合は数値データに修正しているか確認する。
-        '='から始まるセルをinvalidとみなす。
+
+        Note:
+            '='から始まるセルをinvalidとみなす。
         """
         invalid_cells = []
         for r in range(0, self.ws.max_row):
