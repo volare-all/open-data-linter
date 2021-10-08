@@ -1,19 +1,34 @@
 import csv
+import datetime
 import io
 
 import openpyxl
+from openpyxl.cell import Cell
 
 from .csv_linter import CSVLinter
-from .vo import LintResult
 from .funcs import before_check_1_1
+from .vo import LintResult
 
 
 def ws2csv(ws) -> str:
     with io.StringIO() as s:
         writer = csv.writer(s)
         for row in ws.rows:
-            writer.writerow([cell.value for cell in row])
+            writer.writerow([__to_value(cell) for cell in row])
         return s.getvalue()
+
+
+def __to_value(cell: Cell):
+    value = cell.value
+    # 日付データを数値データに変換し、無用なエラーを抑制する
+    if isinstance(value, datetime.datetime):
+        return value.timestamp()
+    elif isinstance(value, datetime.date):
+        datetime.datetime.combine(value, datetime.time()).timestamp()
+    elif isinstance(value, datetime.time):
+        return (value.hour * 60 + value.minute) * 60 + value.second
+    else:
+        return cell.value
 
 
 class ExcelLinter:

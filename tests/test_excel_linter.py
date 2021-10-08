@@ -1,4 +1,4 @@
-from tests.util import gen_excel_linter, assert_valid_lint_result
+from tests.util import gen_excel_linter, assert_valid_lint_result, assert_all_excel_check_is_valid
 
 
 def test_check_1_1():
@@ -23,3 +23,8 @@ def test_check_1_7():
     result = linter.check_1_7()
     assert set(result.invalid_contents[0].invalid_cells) == \
            {(1, 2), (2, 0), (2, 2)}
+
+
+def test_including_date_cell():
+    linter = gen_excel_linter("./samples/date.xlsx")
+    assert_all_excel_check_is_valid(linter)

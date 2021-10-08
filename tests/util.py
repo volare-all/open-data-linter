@@ -34,3 +34,18 @@ def assert_all_csv_check_is_valid(linter: CSVLinter):
     assert_valid_lint_result(linter.check_1_12())
     assert_valid_lint_result(linter.check_1_13())
     assert_valid_lint_result(linter.check_2_x())
+
+
+def assert_all_excel_check_is_valid(linter: ExcelLinter):
+    assert_valid_lint_result(linter.check_1_1())
+    assert_valid_lint_result(linter.check_1_2())
+    assert_valid_lint_result(linter.check_1_3())
+    assert_valid_lint_result(linter.check_1_4())
+    assert_valid_lint_result(linter.check_1_5())
+    assert_valid_lint_result(linter.check_1_6())
+    assert_valid_lint_result(linter.check_1_7())
+    assert_valid_lint_result(linter.check_1_10())
+    assert_valid_lint_result(linter.check_1_11())
+    assert_valid_lint_result(linter.check_1_12())
+    assert_valid_lint_result(linter.check_1_13())
+    assert_valid_lint_result(linter.check_2_x())
