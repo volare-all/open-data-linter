@@ -1,12 +1,15 @@
 import os
 import re
 import traceback
-from typing import List
+from dataclasses import dataclass
+from functools import partial
+from typing import List, Callable, Any
 
 import chardet
 import numpy as np
 from jeraconv import jeraconv
 
+from .column_classifier import ColumnClassifier, ColumnType
 from .csv_structure_analyzer import CSVStructureAnalyzer
 from .errors import HeaderEstimateError
 from .funcs import (
@@ -28,7 +31,12 @@ from .regex import (
     NUMBER_STRING_REGEX,
 )
 from .vo import LintResult, InvalidContent, InvalidCellFactory
-from .column_classifier import ColumnClassifier, ColumnType
+
+
+@dataclass
+class AdjacentColumnCondition:
+    type: ColumnType
+    predicate: Callable[[Any, Any], bool]
 
 
 class CSVLinter:
@@ -372,30 +380,6 @@ class CSVLinter:
                     return False
             return True
 
-        # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，隣接する列に完全一致する都道府県コードがある場合True
-        def is_valid_prefecture_with_prefecture_code(name_c_index,
-                                                     number_c_index):
-            prefecture_name_column = self.df.iloc[:, name_c_index]
-            prefecture_code_column = self.df.iloc[:, number_c_index]
-
-            for name, number in zip(prefecture_name_column,
-                                    prefecture_code_column):
-                if is_empty(name):
-                    continue
-
-                if name == '北海道' and str(number) == '1':
-                    continue
-
-                # 正しい都道府県名が存在する場合，記法が統一されていないためFalse
-                if name in VALID_PREFECTURE_NAME:
-                    return False
-
-                # 省略された都道府県名の隣のセルの都道府県コードが一致しない場合False
-                if name in INVALID_PREFECTURE_NAME and str(
-                        prefectures_numbers[name]) != str(number):
-                    return False
-            return True
-
         # 都道府県を省略した記法で統一されている場合True
         def is_invalid_column(c_index):
             for name in self.df.iloc[:, c_index]:
@@ -418,8 +402,20 @@ class CSVLinter:
                 return True
             return False
 
+        def is_valid_prefecture_with_prefecture_code(name: Any, number: Any):
+            if not (isinstance(name, str) and isinstance(number, int)):
+                return False
+
+            return is_empty(name) or \
+                   (name == '北海道' and str(number) == '1') or \
+                   prefectures_numbers[name] == number
+
         invalid_cells = []
         invalid_columns = []
+        conditions = [
+            AdjacentColumnCondition(ColumnType.PREFECTURE_CODE,
+                                    is_valid_prefecture_with_prefecture_code)
+        ]
 
         # 都道府県名に分類される列ごとに判定
         for j in range(len(self.df.columns)):
@@ -438,21 +434,9 @@ class CSVLinter:
                             self.content_invalid_cell_factory.create(i, j))
                 continue
 
-            # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，左に隣接する列に完全一致する都道府県コードがある場合valid
-            if j > 0 and self.column_classify[j -
-                                              1] == ColumnType.PREFECTURE_CODE:
-                if is_valid_prefecture_with_prefecture_code(j, j - 1):
-                    continue
-
-            # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，右に隣接する列に完全一致する都道府県コードがある場合valid
-            if j + 1 < len(self.df.columns) and self.column_classify[
-                    j + 1] == ColumnType.PREFECTURE_CODE:
-                if is_valid_prefecture_with_prefecture_code(j, j + 1):
-                    continue
-
-            # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県名が省略されている．かつ，完全一致する都道府県番号が存在しない場合列単位でinvalid
-            invalid_columns.append(
-                self.content_invalid_cell_factory.create(None, j))
+            if not self.__check_adjacent_columns(j, conditions):
+                invalid_columns.append(
+                    self.content_invalid_cell_factory.create(None, j))
 
         invalid_contents = []
         if len(invalid_cells):
@@ -508,3 +492,36 @@ class CSVLinter:
         self.encoding = chardet.detect(data)['encoding']
         self.encoding = 'utf-8' if self.encoding is None else self.encoding
         return data.decode(encoding=self.encoding)
+
+    def __check_adjacent_columns(
+            self, column_i: int,
+            conditions: List[AdjacentColumnCondition]) -> bool:
+        """隣接する左右の列が条件を満たしているかを確認。
+
+        Args:
+            column_i: 隣接を確認する対象の列のindex。
+            conditions: 確認する条件のリスト。
+
+        Returns:
+            条件を満たす列が存在する場合にTrue、それ以外はFalse。
+        """
+        def check_adjacent_column(target_i: int, adjacent_i: int,
+                                  condition: AdjacentColumnCondition) -> bool:
+            if condition.type != self.column_classify[adjacent_i]:
+                return False
+
+            for target, adjacent in zip(self.df.iloc[:, target_i],
+                                        self.df.iloc[:, adjacent_i]):
+                if not condition.predicate(target, adjacent):
+                    return False
+            return True
+
+        if column_i > 0 and any(
+                map(partial(check_adjacent_column, column_i, column_i - 1),
+                    conditions)):
+            return True
+        if column_i + 1 < len(self.df.columns) and any(
+                map(partial(check_adjacent_column, column_i, column_i + 1),
+                    conditions)):
+            return True
+        return False
