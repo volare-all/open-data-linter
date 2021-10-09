@@ -3,7 +3,7 @@ import re
 import traceback
 from dataclasses import dataclass
 from functools import partial
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Pattern
 
 import chardet
 import numpy as np
@@ -17,8 +17,6 @@ from .funcs import (
     is_number,
     is_empty,
     is_include_number,
-    is_jp_calendar_year,
-    is_valid_date,
 )
 from .regex import (
     SPACES_AND_LINE_BREAK_REGEX,
@@ -273,43 +271,43 @@ class CSVLinter:
         Note:
             時刻コードもしくは西暦が隣接する列に併記されていない和暦の列を invalid とみなす。
         """
-        def is_valid_cell(cell: str, year: int) -> bool:
-            is_valid_for_datetime_code = is_valid_date(cell,
-                                                       DATETIME_CODE_REGEX,
-                                                       year)
-            is_valid_for_christian_era = is_valid_date(cell,
-                                                       CHRISTIAN_ERA_REGEX,
-                                                       year)
-            return is_valid_for_datetime_code or is_valid_for_christian_era
-
         j2w = jeraconv.J2W()
-        invalid_cells = []
-        for column in self.__get_jp_calendar_column_indices(j2w):
-            for row in range(len(self.df)):
-                target_year = j2w.convert(str(self.df.at[row, column]))
-                is_valid = False
-                if column > 0:
-                    left_cell = str(self.df[column - 1][row])
-                    is_valid = is_valid or is_valid_cell(
-                        left_cell, target_year)
-                if column < len(self.df.columns) - 1:
-                    right_cell = str(self.df[column + 1][row])
-                    is_valid = is_valid or is_valid_cell(
-                        right_cell, target_year)
 
-                if not is_valid:
-                    invalid_cells.append(
-                        self.content_invalid_cell_factory.create(row, column))
+        def is_valid_element(jp_calendar: Any, adjacent: Any,
+                             regex: Pattern) -> bool:
+            try:
+                target_year = j2w.convert(str(jp_calendar))
+            except ValueError:
+                return True
+
+            if is_empty(jp_calendar):
+                return True
+
+            result = regex.match(str(adjacent))
+            if result is None:
+                return False
+            return int(result.groups()[0]) == target_year
+
+        invalid_columns = []
+        conditions = [
+            AdjacentColumnCondition(
+                ColumnType.DATETIME_CODE,
+                partial(is_valid_element, regex=DATETIME_CODE_REGEX)),
+            AdjacentColumnCondition(
+                ColumnType.CHRISTIAN_ERA,
+                partial(is_valid_element, regex=CHRISTIAN_ERA_REGEX)),
+        ]
+
+        for column in range(len(self.df.columns)):
+            if not self.column_classify[column] == ColumnType.JP_CALENDAR_YEAR:
+                continue
+
+            if not self.__check_adjacent_columns(column, conditions):
+                invalid_columns.append(
+                    self.content_invalid_cell_factory.create(None, column))
 
         return LintResult.gen_single_error_message_result(
-            "和暦に適切な時間軸コードまたは⻄暦が併記されていません。", invalid_cells)
-
-    def __get_jp_calendar_column_indices(self, j2w: jeraconv.J2W) -> List[int]:
-        is_jp_calendar_columns = self.df \
-            .applymap(lambda cell: is_jp_calendar_year(j2w, str(cell))) \
-            .all(axis=0)
-        return np.squeeze(np.argwhere(is_jp_calendar_columns.values),
-                          axis=1).tolist()
+            "和暦に適切な時間軸コードまたは⻄暦が併記されていません。", invalid_columns)
 
     @before_check_1_1
     def check_1_12(self):

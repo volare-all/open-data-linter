@@ -92,7 +92,7 @@ def test_check_1_11(perfect):
     linter = gen_csv_linter("./samples/check_1_11.csv")
     result = linter.check_1_11()
     assert set(result.invalid_contents[0].invalid_cells) == \
-           {(1, 5), (2, 1), (2, 2), (2, 5)}
+           {(None, 2), (None, 5)}
 
 
 def test_check_1_12(perfect):
