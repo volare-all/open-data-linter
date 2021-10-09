@@ -430,6 +430,14 @@ class CSVLinter:
             if is_valid_prefecture_name_column(j):
                 continue
 
+            # 列の中で一部が省略されている場合
+            if not is_invalid_column(j):
+                for i, name in enumerate(self.df.iloc[:, j]):
+                    if is_invalid_cell(name):
+                        invalid_cells.append(
+                            self.content_invalid_cell_factory.create(i, j))
+                continue
+
             # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，左に隣接する列に完全一致する都道府県コードがある場合valid
             if j > 0 and self.column_classify[j -
                                               1] == ColumnType.PREFECTURE_CODE:
@@ -443,16 +451,8 @@ class CSVLinter:
                     continue
 
             # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県名が省略されている．かつ，完全一致する都道府県番号が存在しない場合列単位でinvalid
-            if is_invalid_column(j):
-                invalid_columns.append(
-                    self.content_invalid_cell_factory.create(None, j))
-                continue
-
-            # 都道府県名に該当するセルのうち，該当するセルごとに省略された都道府県名をinvalidとする処理
-            for i, name in enumerate(self.df.iloc[:, j]):
-                if is_invalid_cell(name):
-                    invalid_cells.append(
-                        self.content_invalid_cell_factory.create(i, j))
+            invalid_columns.append(
+                self.content_invalid_cell_factory.create(None, j))
 
         invalid_contents = []
         if len(invalid_cells):
