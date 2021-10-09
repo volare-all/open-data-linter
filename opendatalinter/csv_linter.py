@@ -80,8 +80,7 @@ class CSVLinter:
                 "未知のエラーが発生しました。お手数ですがサーバー運営者にお問い合わせください。")
 
     def check_1_1(self):
-        """
-        ファイル形式は Excel か CSV となっているか
+        """チェック項目1-1に沿って、ファイル形式が Excel か CSV となっているか確認する。
         """
         if "1-1" not in self.cache:
             self.cache["1-1"] = LintResult(True, [])
@@ -89,8 +88,7 @@ class CSVLinter:
 
     @before_check_1_1
     def check_1_2(self):
-        """
-        １セル１データとなっているか
+        """チェック項目2-2に沿って、1セル1データとなっているか確認する。
         """
         comma_separated_invalid_cells = []
         num_with_brackets_invalid_cells = []
@@ -128,9 +126,10 @@ class CSVLinter:
 
     @before_check_1_1
     def check_1_3(self):
-        """
-        数値データは数値属性とし、⽂字列を含まないこと.
-        単位が列に一律に含まれている場合，列ごとに警告する
+        """チェック項目1-3に沿って、数値データは数値属性とし、⽂字列を含まないことを確認する。
+
+        Note:
+            単位が列全てに含まれている場合、列ごとに警告する。
         """
 
         invalid_cells = []
@@ -181,16 +180,16 @@ class CSVLinter:
 
     @before_check_1_1
     def check_1_4(self):
-        """
-        セルの結合をしていないか
+        """チェック項目1-4に沿って、セルの結合をしていないか確認する。（Excelのみ適用する）
         """
         return LintResult(True, [])
 
     @before_check_1_1
     def check_1_5(self):
-        """
-        スペースや改⾏等で体裁を整えていないか。
-        スペースと改行を1つ以上含む要素をinvalidとみなす。
+        """チェック項目1-5に沿って、スペースや改⾏等で体裁を整えていないか確認する。
+
+        Note:
+            スペースと改行を1つ以上含む要素を invalid とみなす。
         """
         invalid_cells = []
         for df, invalid_cell_factory in [
@@ -209,8 +208,10 @@ class CSVLinter:
 
     @before_check_1_1
     def check_1_6(self):
-        """
-        項⽬名等を省略していないか(ヘッダに欠損データがないか)
+        """チェック項目1-6に沿って、項⽬名等を省略していないか確認する。
+
+        Note:
+            ヘッダの欠損データを invalid とみなす。
         """
         invalid_cells = list(
             map(lambda t: self.header_invalid_cell_factory.create(t[0], t[1]),
@@ -220,16 +221,16 @@ class CSVLinter:
 
     @before_check_1_1
     def check_1_7(self):
-        """
-        数式を使⽤している場合は、数値データに修正しているか。
+        """チェック項目1-7に沿って、数式が使用されていないかを確認する。（Excelのみ適用する）
         """
         return LintResult(True, [])
 
     @before_check_1_1
     def check_1_10(self):
-        """
-        機種依存⽂字を使⽤していないか。
-        入力ファイルのエンコードがCP932かつshift_jisにデコードできない要素をinvalidとみなす。
+        """チェック項目1-10に沿って，機種依存⽂字を使⽤していないか確認する。
+
+        Note:
+            入力ファイルのエンコードが CP932 かつ shift_jis にデコードできない要素を invalid とみなす。
         """
         if self.encoding == "CP932":
             dfs = [self.header_df, self.df]
@@ -259,8 +260,10 @@ class CSVLinter:
 
     @before_check_1_1
     def check_1_11(self):
-        """
-        e-Stat の時間軸コードの表記、⻄暦表記⼜は和暦に⻄暦の併記がされているか
+        """チェック項目1-11に沿って、e-Stat の時間軸コードの表記、⻄暦表記⼜は和暦に⻄暦の併記がされているか確認する。
+
+        Note:
+            時刻コードもしくは西暦が隣接する列に併記されていない和暦の列を invalid とみなす。
         """
         def is_valid_cell(cell: str, year: int) -> bool:
             is_valid_for_datetime_code = is_valid_date(cell,
@@ -302,8 +305,11 @@ class CSVLinter:
 
     @before_check_1_1
     def check_1_12(self):
-        """
-        正確な地域名称が表記されている．もしくは，隣接するセルに都道府県コードが併記されているか
+        """チェック1-12に沿って、地域コードまたは地域名称が表記されているか確認する
+
+        Note:
+            都道府県のみチェックしている。表記揺れしている都道府県名もしくは，
+            都道府県コードが隣接する列に併記されていない，都道府県名が省略された列を invalid とみなす
         """
 
         prefectures_numbers = {
@@ -461,8 +467,10 @@ class CSVLinter:
 
     @before_check_1_1
     def check_1_13(self):
-        """
-        数値データの同⼀列内に特殊記号（秘匿等）が含まれる場合
+        """チェック項目1-13に沿って、数値データの同一列内に特殊記号（秘匿等）が含まれるか確認する。
+
+        Note:
+            数値データの同⼀列内に'0'、'X'、'***'以外の文字列が含まれる要素を invalid とみなす。
         """
         invalid_cells = []
 
@@ -482,9 +490,10 @@ class CSVLinter:
 
     @before_check_1_1
     def check_2_x(self):
-        """
-        check_2_1 & check_2_2
-        データが分断されていないか確認
+        """チェック項目2-1，2-2に沿って，データが分断されていないか，1シートに複数の表が掲載されていないか確認する。
+
+        Note:
+            データのない行または列がある場合 invalid とみなす。
         """
         column_results = self.df.isnull().all(axis=1)
         row_results = self.df.isnull().all()

@@ -58,8 +58,7 @@ class ExcelLinter:
 
     @before_check_1_1
     def check_1_4(self):
-        """
-        セルの結合をしていないか
+        """チェック項目1-4に沿って、セルの結合をしていないか確認する。
         """
         invalid_cells = []
         for merged_cell in self.ws.merged_cells:
@@ -70,9 +69,10 @@ class ExcelLinter:
 
     @before_check_1_1
     def check_1_7(self):
-        """
-        数式を使⽤している場合は、数値データに修正しているか。
-        '='から始まるセルをinvalidとみなす。
+        """チェック項目1-7に沿って、数式を使⽤している場合は数値データに修正しているか確認する。
+
+        Note:
+            '='から始まるセルを invalid とみなす。
         """
         invalid_cells = []
         for r in range(0, self.ws.max_row):
