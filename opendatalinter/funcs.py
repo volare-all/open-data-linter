@@ -55,7 +55,7 @@ def is_prefecture_code(elem):
     if not is_integer(elem):
         return False
 
-    return 0 < int(float(elem)) and int(float(elem)) <= 47
+    return 0 < int(float(elem)) <= 47
 
 
 def is_prefecture_name(elem):
