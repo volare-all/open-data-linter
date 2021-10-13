@@ -1,12 +1,15 @@
 import os
 import re
 import traceback
-from typing import List
+from dataclasses import dataclass
+from functools import partial
+from typing import List, Callable, Any, Pattern
 
 import chardet
 import numpy as np
 from jeraconv import jeraconv
 
+from .column_classifier import ColumnClassifier, ColumnType
 from .csv_structure_analyzer import CSVStructureAnalyzer
 from .errors import HeaderEstimateError
 from .funcs import (
@@ -14,8 +17,6 @@ from .funcs import (
     is_number,
     is_empty,
     is_include_number,
-    is_jp_calendar_year,
-    is_valid_date,
 )
 from .regex import (
     SPACES_AND_LINE_BREAK_REGEX,
@@ -28,7 +29,12 @@ from .regex import (
     NUMBER_STRING_REGEX,
 )
 from .vo import LintResult, InvalidContent, InvalidCellFactory
-from .column_classifier import ColumnClassifier, ColumnType
+
+
+@dataclass
+class AdjacentColumnCondition:
+    type: ColumnType
+    predicate: Callable[[Any, Any], bool]
 
 
 class CSVLinter:
@@ -265,43 +271,43 @@ class CSVLinter:
         Note:
             時刻コードもしくは西暦が隣接する列に併記されていない和暦の列を invalid とみなす。
         """
-        def is_valid_cell(cell: str, year: int) -> bool:
-            is_valid_for_datetime_code = is_valid_date(cell,
-                                                       DATETIME_CODE_REGEX,
-                                                       year)
-            is_valid_for_christian_era = is_valid_date(cell,
-                                                       CHRISTIAN_ERA_REGEX,
-                                                       year)
-            return is_valid_for_datetime_code or is_valid_for_christian_era
-
         j2w = jeraconv.J2W()
-        invalid_cells = []
-        for column in self.__get_jp_calendar_column_indices(j2w):
-            for row in range(len(self.df)):
-                target_year = j2w.convert(str(self.df.at[row, column]))
-                is_valid = False
-                if column > 0:
-                    left_cell = str(self.df[column - 1][row])
-                    is_valid = is_valid or is_valid_cell(
-                        left_cell, target_year)
-                if column < len(self.df.columns) - 1:
-                    right_cell = str(self.df[column + 1][row])
-                    is_valid = is_valid or is_valid_cell(
-                        right_cell, target_year)
 
-                if not is_valid:
-                    invalid_cells.append(
-                        self.content_invalid_cell_factory.create(row, column))
+        def is_valid_element(jp_calendar: Any, adjacent: Any,
+                             regex: Pattern) -> bool:
+            try:
+                target_year = j2w.convert(str(jp_calendar))
+            except ValueError:
+                return True
+
+            if is_empty(jp_calendar):
+                return True
+
+            result = regex.match(str(adjacent))
+            if result is None:
+                return False
+            return int(result.groups()[0]) == target_year
+
+        invalid_columns = []
+        conditions = [
+            AdjacentColumnCondition(
+                ColumnType.DATETIME_CODE,
+                partial(is_valid_element, regex=DATETIME_CODE_REGEX)),
+            AdjacentColumnCondition(
+                ColumnType.CHRISTIAN_ERA,
+                partial(is_valid_element, regex=CHRISTIAN_ERA_REGEX)),
+        ]
+
+        for column in range(len(self.df.columns)):
+            if not self.column_classify[column] == ColumnType.JP_CALENDAR_YEAR:
+                continue
+
+            if not self.__check_adjacent_columns(column, conditions):
+                invalid_columns.append(
+                    self.content_invalid_cell_factory.create(None, column))
 
         return LintResult.gen_single_error_message_result(
-            "和暦に適切な時間軸コードまたは⻄暦が併記されていません。", invalid_cells)
-
-    def __get_jp_calendar_column_indices(self, j2w: jeraconv.J2W) -> List[int]:
-        is_jp_calendar_columns = self.df \
-            .applymap(lambda cell: is_jp_calendar_year(j2w, str(cell))) \
-            .all(axis=0)
-        return np.squeeze(np.argwhere(is_jp_calendar_columns.values),
-                          axis=1).tolist()
+            "和暦に適切な時間軸コードまたは⻄暦が併記されていません。", invalid_columns)
 
     @before_check_1_1
     def check_1_12(self):
@@ -372,30 +378,6 @@ class CSVLinter:
                     return False
             return True
 
-        # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，隣接する列に完全一致する都道府県コードがある場合True
-        def is_valid_prefecture_with_prefecture_code(name_c_index,
-                                                     number_c_index):
-            prefecture_name_column = self.df.iloc[:, name_c_index]
-            prefecture_code_column = self.df.iloc[:, number_c_index]
-
-            for name, number in zip(prefecture_name_column,
-                                    prefecture_code_column):
-                if is_empty(name):
-                    continue
-
-                if name == '北海道' and str(number) == '1':
-                    continue
-
-                # 正しい都道府県名が存在する場合，記法が統一されていないためFalse
-                if name in VALID_PREFECTURE_NAME:
-                    return False
-
-                # 省略された都道府県名の隣のセルの都道府県コードが一致しない場合False
-                if name in INVALID_PREFECTURE_NAME and str(
-                        prefectures_numbers[name]) != str(number):
-                    return False
-            return True
-
         # 都道府県を省略した記法で統一されている場合True
         def is_invalid_column(c_index):
             for name in self.df.iloc[:, c_index]:
@@ -418,8 +400,20 @@ class CSVLinter:
                 return True
             return False
 
+        def is_valid_prefecture_with_prefecture_code(name: Any, number: Any):
+            if not (isinstance(name, str) and isinstance(number, int)):
+                return False
+
+            return is_empty(name) or \
+                   (name == '北海道' and str(number) == '1') or \
+                   prefectures_numbers[name] == number
+
         invalid_cells = []
         invalid_columns = []
+        conditions = [
+            AdjacentColumnCondition(ColumnType.PREFECTURE_CODE,
+                                    is_valid_prefecture_with_prefecture_code)
+        ]
 
         # 都道府県名に分類される列ごとに判定
         for j in range(len(self.df.columns)):
@@ -430,29 +424,17 @@ class CSVLinter:
             if is_valid_prefecture_name_column(j):
                 continue
 
-            # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，左に隣接する列に完全一致する都道府県コードがある場合valid
-            if j > 0 and self.column_classify[j -
-                                              1] == ColumnType.PREFECTURE_CODE:
-                if is_valid_prefecture_with_prefecture_code(j, j - 1):
-                    continue
-
-            # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県の省略されている．かつ，右に隣接する列に完全一致する都道府県コードがある場合valid
-            if j + 1 < len(self.df.columns) and self.column_classify[
-                    j + 1] == ColumnType.PREFECTURE_CODE:
-                if is_valid_prefecture_with_prefecture_code(j, j + 1):
-                    continue
-
-            # 都道府県名に該当するセルのうち，該当する全てのセルで都道府県名が省略されている．かつ，完全一致する都道府県番号が存在しない場合列単位でinvalid
-            if is_invalid_column(j):
-                invalid_columns.append(
-                    self.content_invalid_cell_factory.create(None, j))
+            # 列の中で一部が省略されている場合
+            if not is_invalid_column(j):
+                for i, name in enumerate(self.df.iloc[:, j]):
+                    if is_invalid_cell(name):
+                        invalid_cells.append(
+                            self.content_invalid_cell_factory.create(i, j))
                 continue
 
-            # 都道府県名に該当するセルのうち，該当するセルごとに省略された都道府県名をinvalidとする処理
-            for i, name in enumerate(self.df.iloc[:, j]):
-                if is_invalid_cell(name):
-                    invalid_cells.append(
-                        self.content_invalid_cell_factory.create(i, j))
+            if not self.__check_adjacent_columns(j, conditions):
+                invalid_columns.append(
+                    self.content_invalid_cell_factory.create(None, j))
 
         invalid_contents = []
         if len(invalid_cells):
@@ -508,3 +490,36 @@ class CSVLinter:
         self.encoding = chardet.detect(data)['encoding']
         self.encoding = 'utf-8' if self.encoding is None else self.encoding
         return data.decode(encoding=self.encoding)
+
+    def __check_adjacent_columns(
+            self, column_i: int,
+            conditions: List[AdjacentColumnCondition]) -> bool:
+        """隣接する左右の列が条件を満たしているかを確認。
+
+        Args:
+            column_i: 隣接を確認する対象の列のindex。
+            conditions: 確認する条件のリスト。
+
+        Returns:
+            条件を満たす列が存在する場合にTrue、それ以外はFalse。
+        """
+        def check_adjacent_column(target_i: int, adjacent_i: int,
+                                  condition: AdjacentColumnCondition) -> bool:
+            if condition.type != self.column_classify[adjacent_i]:
+                return False
+
+            for target, adjacent in zip(self.df.iloc[:, target_i],
+                                        self.df.iloc[:, adjacent_i]):
+                if not condition.predicate(target, adjacent):
+                    return False
+            return True
+
+        if column_i > 0 and any(
+                map(partial(check_adjacent_column, column_i, column_i - 1),
+                    conditions)):
+            return True
+        if column_i + 1 < len(self.df.columns) and any(
+                map(partial(check_adjacent_column, column_i, column_i + 1),
+                    conditions)):
+            return True
+        return False

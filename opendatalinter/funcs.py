@@ -95,13 +95,6 @@ def is_jp_calendar_year(j2w: jeraconv.J2W, year_str: str) -> bool:
         return False
 
 
-def is_valid_date(cell: str, regex: Pattern, year: int) -> bool:
-    result = regex.match(cell)
-    if result is None:
-        return False
-    return int(result.groups()[0]) == year
-
-
 def before_check_1_1(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
